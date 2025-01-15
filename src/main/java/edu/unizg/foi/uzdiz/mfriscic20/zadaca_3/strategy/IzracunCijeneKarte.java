@@ -2,12 +2,12 @@ package edu.unizg.foi.uzdiz.mfriscic20.zadaca_3.strategy;
 
 
 public abstract class IzracunCijeneKarte {
-  protected double cijenaNormalniKm;
-  protected double cijenaUbrzaniKm;
-  protected double cijenaBrziKm;
-  protected double popustVikend;
-  protected double popustWebMob;
-  protected double uvecanjeVlak;
+  public double cijenaNormalniKm;
+  public double cijenaUbrzaniKm;
+  public double cijenaBrziKm;
+  public double popustVikend;
+  public double popustWebMob;
+  public double uvecanjeVlak;
 
   public IzracunCijeneKarte(double cijenaNormalni, double cijenaUbrzani, double cijenaBrzi,
       double popustVikend, double popustWebMob, double uvecanjeVlak) {

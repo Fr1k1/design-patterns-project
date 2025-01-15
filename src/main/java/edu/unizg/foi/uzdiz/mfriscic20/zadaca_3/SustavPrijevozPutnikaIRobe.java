@@ -1,6 +1,10 @@
 package edu.unizg.foi.uzdiz.mfriscic20.zadaca_3;
 
 import java.io.IOException;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -26,7 +30,9 @@ import edu.unizg.foi.uzdiz.mfriscic20.zadaca_3.mediator.KorisnikPrijaviteljPopun
 import edu.unizg.foi.uzdiz.mfriscic20.zadaca_3.mediator.KorisnikProvjeriteljPopunjenostiConcreteColleague;
 import edu.unizg.foi.uzdiz.mfriscic20.zadaca_3.mediator.SustavPopunjenostiVlakovaMediator;
 import edu.unizg.foi.uzdiz.mfriscic20.zadaca_3.strategy.BlagajnaIzracun;
+import edu.unizg.foi.uzdiz.mfriscic20.zadaca_3.strategy.DirektnoUVlakuIzracun;
 import edu.unizg.foi.uzdiz.mfriscic20.zadaca_3.strategy.IzracunCijeneKarte;
+import edu.unizg.foi.uzdiz.mfriscic20.zadaca_3.strategy.WebMobilnaIzracun;
 import edu.unizg.foi.uzdiz.mfriscic20.zadaca_3.visitor.IspisEtapaPremaDanimaVisitor;
 import edu.unizg.foi.uzdiz.mfriscic20.zadaca_3.visitor.IspisEtapaVisitor;
 import edu.unizg.foi.uzdiz.mfriscic20.zadaca_3.visitor.IspisVlakovaVisitor;
@@ -352,6 +358,10 @@ public class SustavPrijevozPutnikaIRobe {
         break;
       case "CVP":
         obradiCvpKomandu(dijelovi);
+        break;
+      case "KKPV2S":
+        obradiKkpv2sKomandu(dijelovi);
+        break;
       default:
         ispisiNepoznatuKomandu();
     }
@@ -986,6 +996,135 @@ public class SustavPrijevozPutnikaIRobe {
 
     } catch (NumberFormatException e) {
       System.out.println("Nevažeći format brojeva u CVP komandi!");
+    }
+  }
+
+  // needs refactor
+  private void obradiKkpv2sKomandu(String[] dijelovi) {
+    // Provjera jesu li cijene postavljene
+    if (izracunCijeneKarte == null) {
+      System.out.println("Cijene nisu postavljene! Prvo koristite CVP komandu.");
+      return;
+    }
+
+    // Obrada parametara
+    String unosKomande = String.join(" ", dijelovi);
+    String[] parametri = unosKomande.substring(unosKomande.indexOf(' ')).trim().split(" - ");
+
+    if (parametri.length != 5) {
+      System.out.println(
+          "Neispravan format komande KKPV2S! Očekujem: KKPV2S oznaka - polaznaStanica - odredisnaStanica - datum - načinKupovine");
+      return;
+    }
+
+    String oznakaVlaka = parametri[0].trim();
+    String polaznaStanica = parametri[1].trim();
+    String odredisnaStanica = parametri[2].trim();
+    String datum = parametri[3].trim();
+    String nacinKupnje = parametri[4].trim();
+
+    // Dohvaćanje vlaka
+    VlakComposite vlak = (VlakComposite) vozniRed.dohvatiDijete(oznakaVlaka);
+    if (vlak == null) {
+      System.out.println("Vlak s oznakom " + oznakaVlaka + " ne postoji!");
+      return;
+    }
+
+    // Pronalazak puta
+    Putovanje put = pronadiPutNaIstojPruzi(polaznaStanica, odredisnaStanica);
+    if (put.isEmpty()) {
+      put = pronadiPutPrekoVisePruga(polaznaStanica, odredisnaStanica);
+    }
+    if (put.isEmpty()) {
+      System.out
+          .println("Ne postoji put između stanica " + polaznaStanica + " i " + odredisnaStanica);
+      return;
+    }
+
+    // Dohvaćamo parametre iz trenutnog izracunCijeneKarte objekta
+    double cijenaNormalniKm = izracunCijeneKarte.cijenaNormalniKm;
+    double cijenaUbrzaniKm = izracunCijeneKarte.cijenaUbrzaniKm;
+    double cijenaBrziKm = izracunCijeneKarte.cijenaBrziKm;
+    double popustVikend = izracunCijeneKarte.popustVikend;
+    double popustWebMob = izracunCijeneKarte.popustWebMob;
+    double uvecanjeVlak = izracunCijeneKarte.uvecanjeVlak;
+
+    // Određivanje osnovne cijene prema vrsti vlaka
+    double osnovnaCijena;
+    if (vlak.getVrstaVlaka().equals("ubrzani")) {
+      osnovnaCijena = cijenaUbrzaniKm;
+    } else if (vlak.getVrstaVlaka().equals("brzi")) {
+      osnovnaCijena = cijenaBrziKm;
+    } else {
+      osnovnaCijena = cijenaNormalniKm;
+    }
+
+    // Odabir strategije prema načinu kupnje
+    IzracunCijeneKarte strategija;
+    switch (nacinKupnje.toUpperCase()) {
+      case "WM":
+        strategija = new WebMobilnaIzracun(cijenaNormalniKm, cijenaUbrzaniKm, cijenaBrziKm,
+            popustVikend, popustWebMob, uvecanjeVlak);
+        break;
+      case "V":
+        strategija = new DirektnoUVlakuIzracun(cijenaNormalniKm, cijenaUbrzaniKm, cijenaBrziKm,
+            popustVikend, popustWebMob, uvecanjeVlak);
+        break;
+      case "B":
+        strategija = new BlagajnaIzracun(cijenaNormalniKm, cijenaUbrzaniKm, cijenaBrziKm,
+            popustVikend, popustWebMob, uvecanjeVlak);
+        break;
+      default:
+        System.out.println("Nevažeći način kupnje! Koristite: B, WM ili V");
+        return;
+    }
+
+    boolean jeVikend = provjeriDaliJeVikend(datum);
+    double udaljenostKm = put.getUkupnoKilometara();
+
+    try {
+      // Izračun cijene koristeći odabranu strategiju
+      double konacnaCijena = strategija.izracunajCijenu(osnovnaCijena, udaljenostKm, jeVikend);
+
+      // Ispis karte
+      System.out.println("\n=== KARTA ZA VLAK ===");
+      System.out.println("Oznaka vlaka: " + oznakaVlaka);
+      System.out.println("Relacija: " + polaznaStanica + " - " + odredisnaStanica);
+      System.out.println("Datum putovanja: " + datum);
+
+      System.out.println("Udaljenost: " + udaljenostKm + " km");
+      System.out.println("Način kupnje: " + nacinKupnje);
+      System.out
+          .println("Osnovna cijena: " + String.format("%.2f", osnovnaCijena * udaljenostKm) + " €");
+      if (jeVikend) {
+        System.out.println("Popust za vikend: " + String.format("%.1f", popustVikend * 100) + "%");
+      }
+      if (nacinKupnje.equals("WM")) {
+        System.out
+            .println("Web/mobilni popust: " + String.format("%.1f", popustWebMob * 100) + "%");
+      } else if (nacinKupnje.equals("V")) {
+        System.out.println(
+            "Uvećanje za kupnju u vlaku: " + String.format("%.1f", uvecanjeVlak * 100) + "%");
+      }
+      System.out.println("Konačna cijena: " + String.format("%.2f", konacnaCijena) + " €");
+      System.out.println("Datum i vrijeme kupnje: "
+          + LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy. HH:mm")));
+      System.out.println("==================");
+
+    } catch (Exception e) {
+      System.out.println("Greška pri izračunu cijene: " + e.getMessage());
+    }
+  }
+
+  private boolean provjeriDaliJeVikend(String datum) {
+    try {
+      DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy.");
+      LocalDate date = LocalDate.parse(datum, formatter);
+      DayOfWeek dan = date.getDayOfWeek();
+      return dan == DayOfWeek.SATURDAY || dan == DayOfWeek.SUNDAY;
+    } catch (Exception e) {
+      System.out.println("Greška pri parsiranju datuma: " + e.getMessage());
+      return false;
     }
   }
 
