@@ -57,7 +57,7 @@ public class ProvjeraPreklapanjaVremenaVisitor implements VozniRedVisitor {
   public void ukloniNeispravneVlakove() {
     if (!vlakoviZaUkloniti.isEmpty()) {
       for (VlakComposite vlak : vlakoviZaUkloniti) {
-        // System.out.println("Uklonjen vlak: " + vlak.getOznakaVlaka());
+        System.out.println("Uklonjen vlak: " + vlak.getOznakaVlaka());
         vozniRed.ukloni(vlak);
       }
     }
