@@ -25,6 +25,8 @@ import edu.unizg.foi.uzdiz.mfriscic20.zadaca_3.mediator.ConcreteMediator;
 import edu.unizg.foi.uzdiz.mfriscic20.zadaca_3.mediator.KorisnikPrijaviteljPopunjenostiConcreteColleague;
 import edu.unizg.foi.uzdiz.mfriscic20.zadaca_3.mediator.KorisnikProvjeriteljPopunjenostiConcreteColleague;
 import edu.unizg.foi.uzdiz.mfriscic20.zadaca_3.mediator.SustavPopunjenostiVlakovaMediator;
+import edu.unizg.foi.uzdiz.mfriscic20.zadaca_3.strategy.BlagajnaIzracun;
+import edu.unizg.foi.uzdiz.mfriscic20.zadaca_3.strategy.IzracunCijeneKarte;
 import edu.unizg.foi.uzdiz.mfriscic20.zadaca_3.visitor.IspisEtapaPremaDanimaVisitor;
 import edu.unizg.foi.uzdiz.mfriscic20.zadaca_3.visitor.IspisEtapaVisitor;
 import edu.unizg.foi.uzdiz.mfriscic20.zadaca_3.visitor.IspisVlakovaVisitor;
@@ -348,6 +350,8 @@ public class SustavPrijevozPutnikaIRobe {
       case "IVI2S":
         obradiIvi2sKomanduProsireno(dijelovi);
         break;
+      case "CVP":
+        obradiCvpKomandu(dijelovi);
       default:
         ispisiNepoznatuKomandu();
     }
@@ -941,6 +945,48 @@ public class SustavPrijevozPutnikaIRobe {
   private int pretvoriVrijemeUMinute(String vrijeme) {
     String[] dijelovi = vrijeme.split(":");
     return Integer.parseInt(dijelovi[0]) * 60 + Integer.parseInt(dijelovi[1]);
+  }
+
+  // ============================================================================================
+  // DZ3
+  // ============================================================================================
+
+  private IzracunCijeneKarte izracunCijeneKarte;
+
+  private void obradiCvpKomandu(String[] dijelovi) {
+    if (dijelovi.length != 7) {
+      System.out.println("Pogrešan format CVP komande!");
+      return;
+    }
+    try {
+      double cijenaNormalni = Double.parseDouble(dijelovi[1].replace(',', '.'));
+      double cijenaUbrzani = Double.parseDouble(dijelovi[2].replace(',', '.'));
+      double cijenaBrzi = Double.parseDouble(dijelovi[3].replace(',', '.'));
+      double popustVikend = Double.parseDouble(dijelovi[4].replace(',', '.')) / 100.0;
+      double popustWebMob = Double.parseDouble(dijelovi[5].replace(',', '.')) / 100.0;
+      double uvecanjeVlak = Double.parseDouble(dijelovi[6].replace(',', '.')) / 100.0;
+      this.izracunCijeneKarte = new BlagajnaIzracun(cijenaNormalni, cijenaUbrzani, cijenaBrzi,
+          popustVikend, popustWebMob, uvecanjeVlak);
+
+      // ovo je samo za testiranje
+
+      try {
+        double testCijena = izracunCijeneKarte.izracunajCijenu(cijenaNormalni, 100, false);
+        System.out.println("Cijene uspješno postavljene!");
+        System.out.printf("Normalni vlak: %.2f €/km%n", cijenaNormalni);
+        System.out.printf("Ubrzani vlak: %.2f €/km%n", cijenaUbrzani);
+        System.out.printf("Brzi vlak: %.2f €/km%n", cijenaBrzi);
+        System.out.printf("Popust vikend: %.1f%%%n", popustVikend * 100);
+        System.out.printf("Popust web/mob: %.1f%%%n", popustWebMob * 100);
+        System.out.printf("Uvećanje u vlaku: %.1f%%%n", uvecanjeVlak * 100);
+        System.out.printf("Test izračun za 100km normalnim vlakom: %.2f €%n", testCijena);
+      } catch (Exception e) {
+        System.out.println("Greška pri testnom izračunu: " + e.getMessage());
+      }
+
+    } catch (NumberFormatException e) {
+      System.out.println("Nevažeći format brojeva u CVP komandi!");
+    }
   }
 
 
