@@ -30,8 +30,6 @@ public class KartaOriginator {
     this.vrijemeKupnje = LocalDateTime.now();
   }
 
-  // ok to nije ni slicno kermeku to sad moram promijeniti
-
   public KartaMemento createMemento() {
     return new KartaMemento(oznakaVlaka, polaznaStanica, odredisnaStanica, datum, nacinKupnje,
         osnovnaCijena, konacnaCijena, udaljenostKm, jeVikend, vrijemeKupnje);

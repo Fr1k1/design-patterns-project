@@ -19,6 +19,15 @@ public class Stanica {
   private Integer vrijemeNormalniVlak;
   private Integer vrijemeUbrzaniVlak;
   private Integer vrijemeBrziVlak;
+  private int udaljenostOdProsle;
+
+  public int getUdaljenostOdProsle() {
+    return udaljenostOdProsle;
+  }
+
+  public void setUdaljenostOdProsle(int udaljenostOdProsle) {
+    this.udaljenostOdProsle = udaljenostOdProsle;
+  }
 
   public Stanica(String stanica, String oznakaPruge, String vrstaStanice, String statusStanice,
       String putniciUlazeIIzlaze, String robaUtovarIstovar, String kategorija, Integer brojPerona,

@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -149,19 +150,33 @@ public class SustavPrijevozPutnikaIRobe {
     System.out.println("| Naziv stanice                | Vrsta    | Km     |");
     System.out.println("+------------------------------+----------+--------+");
 
-    int progresivniKm = 0;
     List<Stanica> stanice = put.getStanice();
+    int progresivniKm = 0;
+
+    boolean obrnutRedoslijed = false;
+    for (Pruga pruga : put.getPruge()) {
+      List<Stanica> staniceNaPruzi = pruga.getStanice();
+      if (staniceNaPruzi.indexOf(stanice.get(0)) > staniceNaPruzi
+          .indexOf(stanice.get(stanice.size() - 1))) {
+        obrnutRedoslijed = true;
+        break;
+      }
+    }
 
     for (int i = 0; i < stanice.size(); i++) {
       Stanica stanica = stanice.get(i);
-
       System.out.printf("| %-28s | %-8s | %6d |%n", stanica.getStanica(), stanica.getVrstaStanice(),
           progresivniKm);
 
       if (i < stanice.size() - 1) {
-        progresivniKm += stanice.get(i + 1).getDuzina();
+        if (!obrnutRedoslijed) {
+          progresivniKm += stanice.get(i + 1).getDuzina();
+        } else {
+          progresivniKm += stanice.get(i).getDuzina();
+        }
       }
     }
+
     System.out.println("+------------------------------+----------+--------+");
   }
 
@@ -669,6 +684,22 @@ public class SustavPrijevozPutnikaIRobe {
     }
   }
 
+  public List<Integer> izracunajUdaljenosti(List<Stanica> staniceNaPutu) {
+    List<Integer> udaljenosti = new ArrayList<>();
+    int trenutnaUdaljenost = 0;
+
+    for (int i = 0; i < staniceNaPutu.size(); i++) {
+      if (i == 0) {
+        udaljenosti.add(0);
+      } else {
+        trenutnaUdaljenost += staniceNaPutu.get(i).getUdaljenostOdProsle();
+        udaljenosti.add(trenutnaUdaljenost);
+      }
+    }
+
+    return udaljenosti;
+  }
+
   private Putovanje pronadiPutNaIstojPruzi(String polaznaStanica, String odredisnaStanica) {
     Putovanje put = new Putovanje();
     Pruga trazenaPruga = null;
@@ -676,9 +707,18 @@ public class SustavPrijevozPutnikaIRobe {
 
     for (Pruga pruga : pruge) {
       List<Stanica> staniceIzmedu = pruga.getStaniceIzmedu(polaznaStanica, odredisnaStanica);
+
       if (!staniceIzmedu.isEmpty()) {
         trazenaPruga = pruga;
         staniceNaPutu = staniceIzmedu;
+        break;
+      }
+
+      List<Stanica> obrnutStaniceIzmedu = pruga.getStaniceIzmedu(odredisnaStanica, polaznaStanica);
+      if (!obrnutStaniceIzmedu.isEmpty()) {
+        trazenaPruga = pruga;
+        staniceNaPutu = new ArrayList<>(obrnutStaniceIzmedu);
+        Collections.reverse(staniceNaPutu);
         break;
       }
     }
@@ -689,11 +729,22 @@ public class SustavPrijevozPutnikaIRobe {
       return put;
     }
 
+    // Izračunaj ispravne udaljenosti
+    List<Integer> udaljenosti = izracunajUdaljenosti(staniceNaPutu);
+
+    // Ispis stanica i udaljenosti za provjeru
+    System.out.println("Stanice na putu od " + polaznaStanica + " do " + odredisnaStanica + ":");
+    for (int i = 0; i < staniceNaPutu.size(); i++) {
+      System.out.println(staniceNaPutu.get(i).getStanica() + " - " + udaljenosti.get(i) + " km");
+    }
+
     put.setPruge(Arrays.asList(trazenaPruga));
     put.setStanice(staniceNaPutu);
 
     return put;
   }
+
+
 
   private void inicijalizirajMape(Map<String, Set<String>> staniceNaPrugama,
       Map<String, Pruga> svePruge, List<Pruga> pruge) {
@@ -1034,14 +1085,11 @@ public class SustavPrijevozPutnikaIRobe {
     String datum = parametri[3].trim();
     String nacinKupnje = parametri[4].trim();
 
-    // Dohvaćanje vlaka
     VlakComposite vlak = (VlakComposite) vozniRed.dohvatiDijete(oznakaVlaka);
     if (vlak == null) {
       System.out.println("Vlak s oznakom " + oznakaVlaka + " ne postoji!");
       return;
     }
-
-    // Pronalazak puta
     Putovanje put = pronadiPutNaIstojPruzi(polaznaStanica, odredisnaStanica);
     if (put.isEmpty()) {
       put = pronadiPutPrekoVisePruga(polaznaStanica, odredisnaStanica);
@@ -1052,7 +1100,6 @@ public class SustavPrijevozPutnikaIRobe {
       return;
     }
 
-    // Određivanje osnovne cijene prema vrsti vlaka
     double osnovnaCijena = switch (vlak.getVrstaVlaka()) {
       case "ubrzani" -> cjenovniKontekst.getCijenaUbrzaniKm();
       case "brzi" -> cjenovniKontekst.getCijenaBrziKm();
@@ -1140,7 +1187,6 @@ public class SustavPrijevozPutnikaIRobe {
     }
 
     if (dijelovi.length == 1) {
-      // Ispis svih karata
       List<KartaMemento> sveKarte = kartaCaretaker.dohvatiSveKarte();
       if (sveKarte.isEmpty()) {
         System.out.println("Nema kupljenih karata!");
@@ -1152,7 +1198,6 @@ public class SustavPrijevozPutnikaIRobe {
         ispisiKartu(sveKarte.get(i));
       }
     } else {
-      // Ispis specifične karte
       try {
         int brojKarte = Integer.parseInt(dijelovi[1]);
         KartaMemento karta = kartaCaretaker.dohvatiKartu(brojKarte);

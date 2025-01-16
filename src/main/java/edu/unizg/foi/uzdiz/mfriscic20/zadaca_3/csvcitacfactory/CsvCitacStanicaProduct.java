@@ -24,7 +24,7 @@ public class CsvCitacStanicaProduct extends CsvCitacProduct {
       "^\\d+$", // broj kolosijeka
       "^\\d+([,.]\\d+)?$", // DO po osovini - može biti i točka i zarez
       "^\\d+([,.]\\d+)?$", // DO po duznom m - može biti i točka i zarez
-      "^[IKZ]$", // status pruge
+      "^[IKZT]$", // status pruge
       "^\\d*$", // duzina
       "^\\d*$", // vrijeme normalni vlak
       "^\\d*$", // vrijeme ubrzani vlak
@@ -39,7 +39,7 @@ public class CsvCitacStanicaProduct extends CsvCitacProduct {
           "Kategorija pruge mora biti M, L ili R", "Broj perona mora biti pozitivan broj",
           "Vrsta pruge mora biti K ili E", "Broj kolosijeka mora biti pozitivan broj",
           "DO po osovini mora biti decimalni broj", "DO po duznom m mora biti decimalni broj",
-          "Status pruge mora biti I, K ili Z", "Duzina mora biti pozitivan broj",
+          "Status pruge mora biti I, K, Z ili T", "Duzina mora biti pozitivan broj",
           "Vrijeme normalnog vlaka mora biti pozitivan broj ili prazno",
           "Vrijeme ubrzanog vlaka mora biti pozitivan broj ili prazno",
           "Vrijeme brzog vlaka mora biti pozitivan broj ili prazno"};

@@ -1,6 +1,7 @@
 package edu.unizg.foi.uzdiz.mfriscic20.zadaca_3.dto;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class Pruga {
@@ -68,11 +69,9 @@ public class Pruga {
   }
 
   // NE MIJENJAJ OVU METODU
-  // tu se jos mora dodati smjer
   public List<Stanica> getStaniceIzmedu(String pocetnaStanica, String zavrsnaStanica) {
     int pocetniIndex = -1;
     int zavrsniIndex = -1;
-
     for (int i = 0; i < stanice.size(); i++) {
       if (stanice.get(i).getStanica().equals(pocetnaStanica)) {
         pocetniIndex = i;
@@ -87,11 +86,13 @@ public class Pruga {
     }
 
     if (pocetniIndex > zavrsniIndex) {
-      int temp = pocetniIndex;
-      pocetniIndex = zavrsniIndex;
-      zavrsniIndex = temp;
+      List<Stanica> obrnutRedoslijed =
+          new ArrayList<>(stanice.subList(zavrsniIndex, pocetniIndex + 1));
+      Collections.reverse(obrnutRedoslijed);
+      return obrnutRedoslijed;
     }
 
     return stanice.subList(pocetniIndex, zavrsniIndex + 1);
   }
+
 }
