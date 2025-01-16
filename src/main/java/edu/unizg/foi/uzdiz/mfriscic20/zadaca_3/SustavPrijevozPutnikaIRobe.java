@@ -33,8 +33,8 @@ import edu.unizg.foi.uzdiz.mfriscic20.zadaca_3.memento.KartaCaretaker;
 import edu.unizg.foi.uzdiz.mfriscic20.zadaca_3.memento.KartaMemento;
 import edu.unizg.foi.uzdiz.mfriscic20.zadaca_3.memento.KartaOriginator;
 import edu.unizg.foi.uzdiz.mfriscic20.zadaca_3.strategy.BlagajnaIzracun;
+import edu.unizg.foi.uzdiz.mfriscic20.zadaca_3.strategy.CijenovniContext;
 import edu.unizg.foi.uzdiz.mfriscic20.zadaca_3.strategy.DirektnoUVlakuIzracun;
-import edu.unizg.foi.uzdiz.mfriscic20.zadaca_3.strategy.IzracunCijeneKarte;
 import edu.unizg.foi.uzdiz.mfriscic20.zadaca_3.strategy.WebMobilnaIzracun;
 import edu.unizg.foi.uzdiz.mfriscic20.zadaca_3.visitor.IspisEtapaPremaDanimaVisitor;
 import edu.unizg.foi.uzdiz.mfriscic20.zadaca_3.visitor.IspisEtapaVisitor;
@@ -969,13 +969,14 @@ public class SustavPrijevozPutnikaIRobe {
   // DZ3
   // ============================================================================================
 
-  private IzracunCijeneKarte izracunCijeneKarte;
+  private CijenovniContext cjenovniKontekst;
 
   private void obradiCvpKomandu(String[] dijelovi) {
     if (dijelovi.length != 7) {
       System.out.println("Pogrešan format CVP komande!");
       return;
     }
+
     try {
       double cijenaNormalni = Double.parseDouble(dijelovi[1].replace(',', '.'));
       double cijenaUbrzani = Double.parseDouble(dijelovi[2].replace(',', '.'));
@@ -983,13 +984,16 @@ public class SustavPrijevozPutnikaIRobe {
       double popustVikend = Double.parseDouble(dijelovi[4].replace(',', '.')) / 100.0;
       double popustWebMob = Double.parseDouble(dijelovi[5].replace(',', '.')) / 100.0;
       double uvecanjeVlak = Double.parseDouble(dijelovi[6].replace(',', '.')) / 100.0;
-      this.izracunCijeneKarte = new BlagajnaIzracun(cijenaNormalni, cijenaUbrzani, cijenaBrzi,
-          popustVikend, popustWebMob, uvecanjeVlak);
 
-      // ovo je samo za testiranje
+      CijenovniContext kontekst = new CijenovniContext();
+      kontekst.postaviCijene(cijenaNormalni, cijenaUbrzani, cijenaBrzi, popustVikend, popustWebMob,
+          uvecanjeVlak);
+
+      kontekst.postaviStrategiju(new BlagajnaIzracun(popustVikend));
+      this.cjenovniKontekst = kontekst;
 
       try {
-        double testCijena = izracunCijeneKarte.izracunajCijenu(cijenaNormalni, 100, false);
+        double testCijena = kontekst.izracunajCijenu(cijenaNormalni, 100, false);
         System.out.println("Cijene uspješno postavljene!");
         System.out.printf("Normalni vlak: %.2f €/km%n", cijenaNormalni);
         System.out.printf("Ubrzani vlak: %.2f €/km%n", cijenaUbrzani);
@@ -1001,7 +1005,6 @@ public class SustavPrijevozPutnikaIRobe {
       } catch (Exception e) {
         System.out.println("Greška pri testnom izračunu: " + e.getMessage());
       }
-
     } catch (NumberFormatException e) {
       System.out.println("Nevažeći format brojeva u CVP komandi!");
     }
@@ -1010,7 +1013,7 @@ public class SustavPrijevozPutnikaIRobe {
   // needs refactor
   private void obradiKkpv2sKomandu(String[] dijelovi) {
     // Provjera jesu li cijene postavljene
-    if (izracunCijeneKarte == null) {
+    if (cjenovniKontekst == null) {
       System.out.println("Cijene nisu postavljene! Prvo koristite CVP komandu.");
       return;
     }
@@ -1049,38 +1052,25 @@ public class SustavPrijevozPutnikaIRobe {
       return;
     }
 
-    // Dohvaćamo parametre iz trenutnog izracunCijeneKarte objekta
-    double cijenaNormalniKm = izracunCijeneKarte.cijenaNormalniKm;
-    double cijenaUbrzaniKm = izracunCijeneKarte.cijenaUbrzaniKm;
-    double cijenaBrziKm = izracunCijeneKarte.cijenaBrziKm;
-    double popustVikend = izracunCijeneKarte.popustVikend;
-    double popustWebMob = izracunCijeneKarte.popustWebMob;
-    double uvecanjeVlak = izracunCijeneKarte.uvecanjeVlak;
-
     // Određivanje osnovne cijene prema vrsti vlaka
-    double osnovnaCijena;
-    if (vlak.getVrstaVlaka().equals("ubrzani")) {
-      osnovnaCijena = cijenaUbrzaniKm;
-    } else if (vlak.getVrstaVlaka().equals("brzi")) {
-      osnovnaCijena = cijenaBrziKm;
-    } else {
-      osnovnaCijena = cijenaNormalniKm;
-    }
+    double osnovnaCijena = switch (vlak.getVrstaVlaka()) {
+      case "ubrzani" -> cjenovniKontekst.getCijenaUbrzaniKm();
+      case "brzi" -> cjenovniKontekst.getCijenaBrziKm();
+      default -> cjenovniKontekst.getCijenaNormalniKm();
+    };
 
-    // Odabir strategije prema načinu kupnje
-    IzracunCijeneKarte strategija;
+    // Postavljanje odgovarajuće strategije prema načinu kupnje
     switch (nacinKupnje.toUpperCase()) {
       case "WM":
-        strategija = new WebMobilnaIzracun(cijenaNormalniKm, cijenaUbrzaniKm, cijenaBrziKm,
-            popustVikend, popustWebMob, uvecanjeVlak);
+        cjenovniKontekst.postaviStrategiju(new WebMobilnaIzracun(cjenovniKontekst.getPopustVikend(),
+            cjenovniKontekst.getPopustWebMob()));
         break;
       case "V":
-        strategija = new DirektnoUVlakuIzracun(cijenaNormalniKm, cijenaUbrzaniKm, cijenaBrziKm,
-            popustVikend, popustWebMob, uvecanjeVlak);
+        cjenovniKontekst.postaviStrategiju(new DirektnoUVlakuIzracun(
+            cjenovniKontekst.getPopustVikend(), cjenovniKontekst.getUvecanjeVlak()));
         break;
       case "B":
-        strategija = new BlagajnaIzracun(cijenaNormalniKm, cijenaUbrzaniKm, cijenaBrziKm,
-            popustVikend, popustWebMob, uvecanjeVlak);
+        cjenovniKontekst.postaviStrategiju(new BlagajnaIzracun(cjenovniKontekst.getPopustVikend()));
         break;
       default:
         System.out.println("Nevažeći način kupnje! Koristite: B, WM ili V");
@@ -1091,34 +1081,34 @@ public class SustavPrijevozPutnikaIRobe {
     double udaljenostKm = put.getUkupnoKilometara();
 
     try {
-      // Izračun cijene koristeći odabranu strategiju
-      double konacnaCijena = strategija.izracunajCijenu(osnovnaCijena, udaljenostKm, jeVikend);
+      double konacnaCijena =
+          cjenovniKontekst.izracunajCijenu(osnovnaCijena, udaljenostKm, jeVikend);
 
       kartaOriginator.setStanje(oznakaVlaka, polaznaStanica, odredisnaStanica, datum, nacinKupnje,
           osnovnaCijena, konacnaCijena, udaljenostKm, jeVikend);
       kartaCaretaker.spremiKartu(kartaOriginator.createMemento());
 
-
-      // Ispis karte
       System.out.println("\n=== KARTA ZA VLAK ===");
       System.out.println("Oznaka vlaka: " + oznakaVlaka);
       System.out.println("Relacija: " + polaznaStanica + " - " + odredisnaStanica);
       System.out.println("Datum putovanja: " + datum);
-
       System.out.println("Udaljenost: " + udaljenostKm + " km");
       System.out.println("Način kupnje: " + nacinKupnje);
       System.out
           .println("Osnovna cijena: " + String.format("%.2f", osnovnaCijena * udaljenostKm) + " €");
+
       if (jeVikend) {
-        System.out.println("Popust za vikend: " + String.format("%.1f", popustVikend * 100) + "%");
+        System.out.println("Popust za vikend: "
+            + String.format("%.1f", cjenovniKontekst.getPopustVikend() * 100) + "%");
       }
       if (nacinKupnje.equals("WM")) {
-        System.out
-            .println("Web/mobilni popust: " + String.format("%.1f", popustWebMob * 100) + "%");
+        System.out.println("Web/mobilni popust: "
+            + String.format("%.1f", cjenovniKontekst.getPopustWebMob() * 100) + "%");
       } else if (nacinKupnje.equals("V")) {
-        System.out.println(
-            "Uvećanje za kupnju u vlaku: " + String.format("%.1f", uvecanjeVlak * 100) + "%");
+        System.out.println("Uvećanje za kupnju u vlaku: "
+            + String.format("%.1f", cjenovniKontekst.getUvecanjeVlak() * 100) + "%");
       }
+
       System.out.println("Konačna cijena: " + String.format("%.2f", konacnaCijena) + " €");
       System.out.println("Datum i vrijeme kupnje: "
           + LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy. HH:mm")));
@@ -1128,6 +1118,8 @@ public class SustavPrijevozPutnikaIRobe {
       System.out.println("Greška pri izračunu cijene: " + e.getMessage());
     }
   }
+
+
 
   private boolean provjeriDaliJeVikend(String datum) {
     try {

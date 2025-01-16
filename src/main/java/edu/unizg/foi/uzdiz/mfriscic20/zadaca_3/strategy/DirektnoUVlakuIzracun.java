@@ -1,9 +1,11 @@
 package edu.unizg.foi.uzdiz.mfriscic20.zadaca_3.strategy;
 
 public class DirektnoUVlakuIzracun extends IzracunCijeneKarte {
-  public DirektnoUVlakuIzracun(double cijenaNormalni, double cijenaUbrzani, double cijenaBrzi,
-      double popustVikend, double popustWebMob, double uvecanjeVlak) {
-    super(cijenaNormalni, cijenaUbrzani, cijenaBrzi, popustVikend, popustWebMob, uvecanjeVlak);
+  private final double uvecanjeVlak;
+
+  public DirektnoUVlakuIzracun(double popustVikend, double uvecanjeVlak) {
+    super(popustVikend);
+    this.uvecanjeVlak = uvecanjeVlak;
   }
 
   @Override

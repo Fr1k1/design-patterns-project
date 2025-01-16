@@ -1,9 +1,8 @@
 package edu.unizg.foi.uzdiz.mfriscic20.zadaca_3.strategy;
 
 public class BlagajnaIzracun extends IzracunCijeneKarte {
-  public BlagajnaIzracun(double cijenaNormalni, double cijenaUbrzani, double cijenaBrzi,
-      double popustVikend, double popustWebMob, double uvecanjeVlak) {
-    super(cijenaNormalni, cijenaUbrzani, cijenaBrzi, popustVikend, popustWebMob, uvecanjeVlak);
+  public BlagajnaIzracun(double popustVikend) {
+    super(popustVikend);
   }
 
   @Override

@@ -1,9 +1,11 @@
 package edu.unizg.foi.uzdiz.mfriscic20.zadaca_3.strategy;
 
 public class WebMobilnaIzracun extends IzracunCijeneKarte {
-  public WebMobilnaIzracun(double cijenaNormalni, double cijenaUbrzani, double cijenaBrzi,
-      double popustVikend, double popustWebMob, double uvecanjeVlak) {
-    super(cijenaNormalni, cijenaUbrzani, cijenaBrzi, popustVikend, popustWebMob, uvecanjeVlak);
+  private final double popustWebMob;
+
+  public WebMobilnaIzracun(double popustVikend, double popustWebMob) {
+    super(popustVikend);
+    this.popustWebMob = popustWebMob;
   }
 
   @Override
@@ -16,3 +18,4 @@ public class WebMobilnaIzracun extends IzracunCijeneKarte {
     return cijena * (1 - popustWebMob);
   }
 }
+
