@@ -706,7 +706,7 @@ public class SustavPrijevozPutnikaIRobe {
     List<Stanica> staniceNaPutu = null;
 
     for (Pruga pruga : pruge) {
-      List<Stanica> staniceIzmedu = pruga.getStaniceIzmedu(polaznaStanica, odredisnaStanica);
+      List<Stanica> staniceIzmedu = pruga.fixedGetStaniceIzmedu(polaznaStanica, odredisnaStanica);
 
       if (!staniceIzmedu.isEmpty()) {
         trazenaPruga = pruga;
@@ -714,7 +714,8 @@ public class SustavPrijevozPutnikaIRobe {
         break;
       }
 
-      List<Stanica> obrnutStaniceIzmedu = pruga.getStaniceIzmedu(odredisnaStanica, polaznaStanica);
+      List<Stanica> obrnutStaniceIzmedu =
+          pruga.fixedGetStaniceIzmedu(odredisnaStanica, polaznaStanica);
       if (!obrnutStaniceIzmedu.isEmpty()) {
         trazenaPruga = pruga;
         staniceNaPutu = new ArrayList<>(obrnutStaniceIzmedu);
@@ -829,7 +830,7 @@ public class SustavPrijevozPutnikaIRobe {
           String oznakaPruge = zajednickePruge.iterator().next();
           Pruga pruga = svePruge.get(oznakaPruge);
           List<Stanica> staniceNaSegmentu =
-              pruga.getStaniceIzmedu(trenutnaStanica, sljedecaStanica);
+              pruga.fixedGetStaniceIzmedu(trenutnaStanica, sljedecaStanica);
           dodajNoveStaniceNaPut(put, staniceNaSegmentu, udaljenosti);
           put.dodajPrugu(pruga);
         }

@@ -74,6 +74,32 @@ public class Pruga {
   public List<Stanica> getStaniceIzmedu(String pocetnaStanica, String zavrsnaStanica) {
     int pocetniIndex = -1;
     int zavrsniIndex = -1;
+
+    for (int i = 0; i < stanice.size(); i++) {
+      if (stanice.get(i).getStanica().equals(pocetnaStanica)) {
+        pocetniIndex = i;
+      }
+      if (stanice.get(i).getStanica().equals(zavrsnaStanica)) {
+        zavrsniIndex = i;
+      }
+    }
+
+    if (pocetniIndex == -1 || zavrsniIndex == -1) {
+      return new ArrayList<>();
+    }
+
+    if (pocetniIndex > zavrsniIndex) {
+      int temp = pocetniIndex;
+      pocetniIndex = zavrsniIndex;
+      zavrsniIndex = temp;
+    }
+
+    return stanice.subList(pocetniIndex, zavrsniIndex + 1);
+  }
+
+  public List<Stanica> fixedGetStaniceIzmedu(String pocetnaStanica, String zavrsnaStanica) {
+    int pocetniIndex = -1;
+    int zavrsniIndex = -1;
     for (int i = 0; i < stanice.size(); i++) {
       if (stanice.get(i).getStanica().equals(pocetnaStanica)) {
         pocetniIndex = i;
