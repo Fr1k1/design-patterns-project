@@ -28,7 +28,6 @@ public class KartaMemento {
     this.udaljenostKm = udaljenostKm;
     this.jeVikend = jeVikend;
     this.vrijemeKupnje = vrijemeKupnje;
-    // this.fullState on tu ima stavljeno da je false...e sad ne znam kaj ce mu to
   }
 
   public String getOznakaVlaka() {

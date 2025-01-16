@@ -60,6 +60,8 @@ public class Pruga {
     return obrnuto;
   }
 
+  // ovo tu se koristi ak za nist drugo za pregled pruga
+
   public int getUkupnoKilometara() {
     int ukupno = 0;
     for (Stanica stanica : stanice) {

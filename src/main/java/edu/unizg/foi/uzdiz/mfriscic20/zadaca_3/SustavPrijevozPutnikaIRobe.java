@@ -729,14 +729,7 @@ public class SustavPrijevozPutnikaIRobe {
       return put;
     }
 
-    // Izračunaj ispravne udaljenosti
     List<Integer> udaljenosti = izracunajUdaljenosti(staniceNaPutu);
-
-    // Ispis stanica i udaljenosti za provjeru
-    System.out.println("Stanice na putu od " + polaznaStanica + " do " + odredisnaStanica + ":");
-    for (int i = 0; i < staniceNaPutu.size(); i++) {
-      System.out.println(staniceNaPutu.get(i).getStanica() + " - " + udaljenosti.get(i) + " km");
-    }
 
     put.setPruge(Arrays.asList(trazenaPruga));
     put.setStanice(staniceNaPutu);
@@ -1061,15 +1054,42 @@ public class SustavPrijevozPutnikaIRobe {
     }
   }
 
+  public int izracunajKilometreZaKartu(String polaznaStanica, String odredisnaStanica) {
+    Putovanje put = pronadiPutNaIstojPruzi(polaznaStanica, odredisnaStanica);
+    if (put.isEmpty())
+      return 0;
+
+    List<Stanica> stanice = put.getStanice();
+    int ukupniKm = 0;
+    boolean obrnutRedoslijed = false;
+
+    for (Pruga pruga : put.getPruge()) {
+      List<Stanica> staniceNaPruzi = pruga.getStanice();
+      if (staniceNaPruzi.indexOf(stanice.get(0)) > staniceNaPruzi
+          .indexOf(stanice.get(stanice.size() - 1))) {
+        obrnutRedoslijed = true;
+        break;
+      }
+    }
+
+    for (int i = 0; i < stanice.size() - 1; i++) {
+      if (!obrnutRedoslijed) {
+        ukupniKm += stanice.get(i + 1).getDuzina();
+      } else {
+        ukupniKm += stanice.get(i).getDuzina();
+      }
+    }
+
+    return ukupniKm;
+  }
+
   // needs refactor
   private void obradiKkpv2sKomandu(String[] dijelovi) {
-    // Provjera jesu li cijene postavljene
     if (cjenovniKontekst == null) {
       System.out.println("Cijene nisu postavljene! Prvo koristite CVP komandu.");
       return;
     }
 
-    // Obrada parametara
     String unosKomande = String.join(" ", dijelovi);
     String[] parametri = unosKomande.substring(unosKomande.indexOf(' ')).trim().split(" - ");
 
@@ -1125,7 +1145,28 @@ public class SustavPrijevozPutnikaIRobe {
     }
 
     boolean jeVikend = provjeriDaliJeVikend(datum);
-    double udaljenostKm = put.getUkupnoKilometara();
+    double udaljenostKm = 0;
+    List<Stanica> stanice = put.getStanice();
+    boolean obrnutRedoslijed = false;
+
+    // Provjeri smjer
+    for (Pruga pruga : put.getPruge()) {
+      List<Stanica> staniceNaPruzi = pruga.getStanice();
+      if (staniceNaPruzi.indexOf(stanice.get(0)) > staniceNaPruzi
+          .indexOf(stanice.get(stanice.size() - 1))) {
+        obrnutRedoslijed = true;
+        break;
+      }
+    }
+
+    // Izračunaj kilometre
+    for (int i = 0; i < stanice.size() - 1; i++) {
+      if (!obrnutRedoslijed) {
+        udaljenostKm += stanice.get(i + 1).getDuzina();
+      } else {
+        udaljenostKm += stanice.get(i).getDuzina();
+      }
+    }
 
     try {
       double konacnaCijena =
