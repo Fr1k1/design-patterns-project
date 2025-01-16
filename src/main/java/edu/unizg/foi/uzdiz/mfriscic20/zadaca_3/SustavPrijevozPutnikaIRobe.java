@@ -29,6 +29,9 @@ import edu.unizg.foi.uzdiz.mfriscic20.zadaca_3.mediator.ConcreteMediator;
 import edu.unizg.foi.uzdiz.mfriscic20.zadaca_3.mediator.KorisnikPrijaviteljPopunjenostiConcreteColleague;
 import edu.unizg.foi.uzdiz.mfriscic20.zadaca_3.mediator.KorisnikProvjeriteljPopunjenostiConcreteColleague;
 import edu.unizg.foi.uzdiz.mfriscic20.zadaca_3.mediator.SustavPopunjenostiVlakovaMediator;
+import edu.unizg.foi.uzdiz.mfriscic20.zadaca_3.memento.KartaCaretaker;
+import edu.unizg.foi.uzdiz.mfriscic20.zadaca_3.memento.KartaMemento;
+import edu.unizg.foi.uzdiz.mfriscic20.zadaca_3.memento.KartaOriginator;
 import edu.unizg.foi.uzdiz.mfriscic20.zadaca_3.strategy.BlagajnaIzracun;
 import edu.unizg.foi.uzdiz.mfriscic20.zadaca_3.strategy.DirektnoUVlakuIzracun;
 import edu.unizg.foi.uzdiz.mfriscic20.zadaca_3.strategy.IzracunCijeneKarte;
@@ -74,6 +77,8 @@ public class SustavPrijevozPutnikaIRobe {
   private final VozniRedComposite vozniRed = new VozniRedComposite();
   private final List<Korisnik> korisnici = new ArrayList<>();
   SustavPopunjenostiVlakovaMediator mediator = new ConcreteMediator();
+  private KartaOriginator kartaOriginator = new KartaOriginator();
+  private KartaCaretaker kartaCaretaker = new KartaCaretaker();
 
 
 
@@ -361,6 +366,9 @@ public class SustavPrijevozPutnikaIRobe {
         break;
       case "KKPV2S":
         obradiKkpv2sKomandu(dijelovi);
+        break;
+      case "IKKPV":
+        obradiIkkpvKomandu(dijelovi);
         break;
       default:
         ispisiNepoznatuKomandu();
@@ -1086,6 +1094,11 @@ public class SustavPrijevozPutnikaIRobe {
       // Izračun cijene koristeći odabranu strategiju
       double konacnaCijena = strategija.izracunajCijenu(osnovnaCijena, udaljenostKm, jeVikend);
 
+      kartaOriginator.setStanje(oznakaVlaka, polaznaStanica, odredisnaStanica, datum, nacinKupnje,
+          osnovnaCijena, konacnaCijena, udaljenostKm, jeVikend);
+      kartaCaretaker.spremiKartu(kartaOriginator.createMemento());
+
+
       // Ispis karte
       System.out.println("\n=== KARTA ZA VLAK ===");
       System.out.println("Oznaka vlaka: " + oznakaVlaka);
@@ -1126,6 +1139,58 @@ public class SustavPrijevozPutnikaIRobe {
       System.out.println("Greška pri parsiranju datuma: " + e.getMessage());
       return false;
     }
+  }
+
+  private void obradiIkkpvKomandu(String[] dijelovi) {
+    if (dijelovi.length > 2) {
+      System.out.println("Neispravan format komande IKKPV!");
+      return;
+    }
+
+    if (dijelovi.length == 1) {
+      // Ispis svih karata
+      List<KartaMemento> sveKarte = kartaCaretaker.dohvatiSveKarte();
+      if (sveKarte.isEmpty()) {
+        System.out.println("Nema kupljenih karata!");
+        return;
+      }
+
+      for (int i = 0; i < sveKarte.size(); i++) {
+        System.out.println("\nKarta #" + (i + 1));
+        ispisiKartu(sveKarte.get(i));
+      }
+    } else {
+      // Ispis specifične karte
+      try {
+        int brojKarte = Integer.parseInt(dijelovi[1]);
+        KartaMemento karta = kartaCaretaker.dohvatiKartu(brojKarte);
+
+        if (karta == null) {
+          System.out.println("Karta broj " + brojKarte + " ne postoji!");
+          return;
+        }
+
+        ispisiKartu(karta);
+      } catch (NumberFormatException e) {
+        System.out.println("Broj karte mora biti cijeli broj!");
+      }
+    }
+  }
+
+  private void ispisiKartu(KartaMemento karta) {
+    System.out.println("=== KARTA ZA VLAK ===");
+    System.out.println("Oznaka vlaka: " + karta.getOznakaVlaka());
+    System.out
+        .println("Relacija: " + karta.getPolaznaStanica() + " - " + karta.getOdredisnaStanica());
+    System.out.println("Datum putovanja: " + karta.getDatum());
+    System.out.println("Udaljenost: " + karta.getUdaljenostKm() + " km");
+    System.out.println("Način kupnje: " + karta.getNacinKupnje());
+    System.out.println("Osnovna cijena: "
+        + String.format("%.2f", karta.getOsnovnaCijena() * karta.getUdaljenostKm()) + " €");
+    System.out.println("Konačna cijena: " + String.format("%.2f", karta.getKonacnaCijena()) + " €");
+    System.out.println("Datum i vrijeme kupnje: "
+        + karta.getVrijemeKupnje().format(DateTimeFormatter.ofPattern("dd.MM.yyyy. HH:mm")));
+    System.out.println("==================");
   }
 
 
