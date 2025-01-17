@@ -1121,9 +1121,11 @@ public class SustavPrijevozPutnikaIRobe {
       return;
     }
 
+    System.out.println("Vrsta vlaka je " + vlak.getVrstaVlaka()); // Prvo ispišite vrstu vlaka
+
     double osnovnaCijena = switch (vlak.getVrstaVlaka()) {
-      case "ubrzani" -> cjenovniKontekst.getCijenaUbrzaniKm();
-      case "brzi" -> cjenovniKontekst.getCijenaBrziKm();
+      case "U" -> cjenovniKontekst.getCijenaUbrzaniKm();
+      case "B" -> cjenovniKontekst.getCijenaBrziKm();
       default -> cjenovniKontekst.getCijenaNormalniKm();
     };
 
@@ -1170,6 +1172,7 @@ public class SustavPrijevozPutnikaIRobe {
     }
 
     try {
+      // tu se onda poziva ovisno o strategiji koja je postavljena u konstruktoru
       double konacnaCijena =
           cjenovniKontekst.izracunajCijenu(osnovnaCijena, udaljenostKm, jeVikend);
 
