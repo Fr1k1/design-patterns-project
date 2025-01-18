@@ -1300,11 +1300,6 @@ public class SustavPrijevozPutnikaIRobe {
     String zavrsnaStanica = parametri[2].trim();
     String novoStanje = parametri[3].trim();
 
-    System.out.println("\nParsirani podaci:");
-    System.out.println("Oznaka pruge: '" + oznakaPruge + "'");
-    System.out.println("Početna stanica: '" + pocetnaStanica + "'");
-    System.out.println("Završna stanica: '" + zavrsnaStanica + "'");
-    System.out.println("Novo stanje: '" + novoStanje + "'");
 
     Pruga pruga = dohvatiPrugu(oznakaPruge);
     if (pruga == null) {

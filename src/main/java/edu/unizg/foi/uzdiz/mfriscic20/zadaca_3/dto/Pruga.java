@@ -22,6 +22,80 @@ public class Pruga {
     this.relacije = new HashMap<>();
   }
 
+  private boolean postojiPreklapanje(String novaPolazna, String novaZavrsna) {
+    // Prvo nađimo sve stanice između za novu relaciju
+    List<Stanica> staniceNoveRelacije = fixedGetStaniceIzmedu(novaPolazna, novaZavrsna);
+
+    // Uklonimo granice nove relacije za usporedbu
+    List<Stanica> unutarnjeStaniceNove = new ArrayList<>(staniceNoveRelacije);
+    unutarnjeStaniceNove.remove(0); // Ukloni prvu stanicu
+    if (unutarnjeStaniceNove.size() > 0) {
+      unutarnjeStaniceNove.remove(unutarnjeStaniceNove.size() - 1); // Ukloni zadnju stanicu
+    }
+
+    for (RelacijaPrugeContext postojecaRelacija : relacije.values()) {
+      // Preskočimo relacije koje su ispravne
+      if (postojecaRelacija.getTrenutnoStanje().getStatus().equals("I")) {
+        continue;
+      }
+      List<Stanica> stanicePostojeceRelacije = fixedGetStaniceIzmedu(
+          postojecaRelacija.getPocetnaStanica(), postojecaRelacija.getZavrsnaStanica());
+
+      // Ako nova relacija sadrži BILO KOJU unutarnju stanicu postojeće relacije,
+      // ili ako postojeća relacija sadrži BILO KOJU unutarnju stanicu nove relacije,
+      // imamo preklapanje
+      for (Stanica stanica : unutarnjeStaniceNove) {
+        if (stanicePostojeceRelacije.contains(stanica)) {
+          return true;
+        }
+      }
+
+      // Uklonimo granice postojeće relacije za usporedbu
+      List<Stanica> unutarnjeStanicePostojece = new ArrayList<>(stanicePostojeceRelacije);
+      unutarnjeStanicePostojece.remove(0);
+      if (unutarnjeStanicePostojece.size() > 0) {
+        unutarnjeStanicePostojece.remove(unutarnjeStanicePostojece.size() - 1);
+      }
+
+      for (Stanica stanica : unutarnjeStanicePostojece) {
+        if (staniceNoveRelacije.contains(stanica)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  private boolean mozeMijenjatiStatus(String pocetnaStanica, String zavrsnaStanica,
+      String novoStanje) {
+    String kljucRelacije = pocetnaStanica + "-" + zavrsnaStanica;
+    RelacijaPrugeContext relacija = relacije.get(kljucRelacije);
+
+    // Ako relacija već postoji, provjeravamo samo pravila prijelaza između stanja
+    if (relacija != null) {
+      String trenutnoStanje = relacija.getTrenutnoStanje().getStatus();
+
+      // Ako je relacija zatvorena, može prijeći samo u testiranje
+      if (trenutnoStanje.equals("Z")) {
+        return novoStanje.equals("T");
+      }
+
+      // Iz testiranja može prijeći samo u ispravno stanje
+      if (trenutnoStanje.equals("T")) {
+        return novoStanje.equals("I");
+      }
+
+      return true; // Za ostale prijelaze nema ograničenja
+    }
+
+    // Ako je nova relacija, provjeri preklapanja samo ako je novo stanje K ili Z
+    if (novoStanje.equals("K") || novoStanje.equals("Z")) {
+      return !postojiPreklapanje(pocetnaStanica, zavrsnaStanica);
+    }
+
+    return true;
+  }
+
   public Map<String, RelacijaPrugeContext> getRelacije() {
     return new HashMap<>(relacije);
   }
@@ -40,11 +114,17 @@ public class Pruga {
   public void request(String pocetnaStanica, String zavrsnaStanica, String novoStanje) {
     List<Stanica> staniceNaRelaciji = fixedGetStaniceIzmedu(pocetnaStanica, zavrsnaStanica);
     if (staniceNaRelaciji.isEmpty()) {
+      System.out.println("Ne postoji relacija između zadanih stanica");
+      return;
+    }
+
+    // Provjeri može li se mijenjati status
+    if (!mozeMijenjatiStatus(pocetnaStanica, zavrsnaStanica, novoStanje)) {
+      System.out.println("Nije moguće promijeniti status relacije zbog postojećih ograničenja");
       return;
     }
 
     int brojKolosijeka = staniceNaRelaciji.get(0).getBrojKolosjeka();
-    // ovo mozda refactor kasnije
     String kljucRelacije = pocetnaStanica + "-" + zavrsnaStanica;
     RelacijaPrugeContext relacija = relacije.get(kljucRelacije);
 
