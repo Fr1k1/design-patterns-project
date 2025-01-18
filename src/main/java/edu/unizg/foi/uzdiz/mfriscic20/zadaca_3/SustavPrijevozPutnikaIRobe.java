@@ -33,6 +33,7 @@ import edu.unizg.foi.uzdiz.mfriscic20.zadaca_3.mediator.SustavPopunjenostiVlakov
 import edu.unizg.foi.uzdiz.mfriscic20.zadaca_3.memento.KartaCaretaker;
 import edu.unizg.foi.uzdiz.mfriscic20.zadaca_3.memento.KartaMemento;
 import edu.unizg.foi.uzdiz.mfriscic20.zadaca_3.memento.KartaOriginator;
+import edu.unizg.foi.uzdiz.mfriscic20.zadaca_3.state.RelacijaPrugeContext;
 import edu.unizg.foi.uzdiz.mfriscic20.zadaca_3.strategy.BlagajnaIzracun;
 import edu.unizg.foi.uzdiz.mfriscic20.zadaca_3.strategy.CijenovniContext;
 import edu.unizg.foi.uzdiz.mfriscic20.zadaca_3.strategy.DirektnoUVlakuIzracun;
@@ -384,6 +385,12 @@ public class SustavPrijevozPutnikaIRobe {
         break;
       case "IKKPV":
         obradiIkkpvKomandu(dijelovi);
+        break;
+      case "PSP2S":
+        obradiPromjenuStatusaPruge(dijelovi);
+        break;
+      case "IRPS":
+        obradiIspisRelacijaPruga(dijelovi);
         break;
       default:
         ispisiNepoznatuKomandu();
@@ -1275,6 +1282,96 @@ public class SustavPrijevozPutnikaIRobe {
     System.out.println("==================");
   }
 
+  private void obradiPromjenuStatusaPruge(String[] dijelovi) {
+    // Spoji sve dijelove natrag u string
+    String unosKomande = String.join(" ", dijelovi);
+
+    // Razdvoji po crticama
+    String[] parametri = unosKomande.substring(unosKomande.indexOf(' ')).trim().split(" - ");
+
+    if (parametri.length != 4) {
+      System.out.println(
+          "Neispravan format komande PSP2S! Očekujem: PSP2S oznakaPruge - polaznaStanica - odredisnaStanica - status");
+      return;
+    }
+
+    String oznakaPruge = parametri[0].trim();
+    String pocetnaStanica = parametri[1].trim();
+    String zavrsnaStanica = parametri[2].trim();
+    String novoStanje = parametri[3].trim();
+
+    System.out.println("\nParsirani podaci:");
+    System.out.println("Oznaka pruge: '" + oznakaPruge + "'");
+    System.out.println("Početna stanica: '" + pocetnaStanica + "'");
+    System.out.println("Završna stanica: '" + zavrsnaStanica + "'");
+    System.out.println("Novo stanje: '" + novoStanje + "'");
+
+    Pruga pruga = dohvatiPrugu(oznakaPruge);
+    if (pruga == null) {
+      System.out.println("Pruga " + oznakaPruge + " ne postoji");
+      return;
+    }
+
+    List<Stanica> staniceNaRelaciji = pruga.getStaniceIzmedu(pocetnaStanica, zavrsnaStanica);
+    System.out.println("Stanice između su:");
+    for (Stanica stanica : staniceNaRelaciji) {
+      System.out.println(stanica.getStanica());
+    }
+
+    if (staniceNaRelaciji.isEmpty()) {
+      System.out.println("Ne postoji direktna relacija između zadanih stanica");
+      return;
+    }
+
+    pruga.request(pocetnaStanica, zavrsnaStanica, novoStanje);
+  }
+
+  private void obradiIspisRelacijaPruga(String[] dijelovi) {
+    if (dijelovi.length < 2) {
+      System.out.println("Neispravan format komande IRPS");
+      return;
+    }
+
+    String status = dijelovi[1];
+    String oznakaPruge = null;
+    if (dijelovi.length > 2) {
+      oznakaPruge = dijelovi[2];
+    }
+
+    boolean pronadjeneRelacije = false;
+
+    if (oznakaPruge != null) {
+      Pruga pruga = dohvatiPrugu(oznakaPruge);
+      if (pruga == null) {
+        System.out.println("Pruga " + oznakaPruge + " ne postoji");
+        return;
+      }
+      ispisRelacijaZaPrugu(pruga, status);
+    } else {
+      for (Pruga pruga : pruge) {
+        ispisRelacijaZaPrugu(pruga, status);
+      }
+    }
+  }
+
+  private void ispisRelacijaZaPrugu(Pruga pruga, String status) {
+    Map<String, RelacijaPrugeContext> relacije = pruga.getRelacije();
+    List<RelacijaPrugeContext> relacijeStatusom = new ArrayList<>();
+
+    for (RelacijaPrugeContext relacija : relacije.values()) {
+      if (relacija.getTrenutnoStanje().getStatus().equals(status)) {
+        relacijeStatusom.add(relacija);
+      }
+    }
+
+    if (!relacijeStatusom.isEmpty()) {
+      System.out
+          .println("\nRelacije na pruzi " + pruga.getOznaka() + " sa statusom " + status + ":");
+      for (RelacijaPrugeContext relacija : relacijeStatusom) {
+        System.out.println(relacija.getPocetnaStanica() + " - " + relacija.getZavrsnaStanica());
+      }
+    }
+  }
 
 
 }

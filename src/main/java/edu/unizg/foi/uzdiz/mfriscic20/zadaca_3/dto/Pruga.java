@@ -2,15 +2,59 @@ package edu.unizg.foi.uzdiz.mfriscic20.zadaca_3.dto;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import edu.unizg.foi.uzdiz.mfriscic20.zadaca_3.state.IspravnoStanje;
+import edu.unizg.foi.uzdiz.mfriscic20.zadaca_3.state.RelacijaPrugeContext;
+import edu.unizg.foi.uzdiz.mfriscic20.zadaca_3.state.StanjePrugeState;
 
 public class Pruga {
   private String oznaka;
   private List<Stanica> stanice;
+  private StanjePrugeState trenutnoStanje;
+  private Map<String, RelacijaPrugeContext> relacije;
 
   public Pruga(String oznaka) {
     this.oznaka = oznaka;
     this.stanice = new ArrayList<>();
+    this.trenutnoStanje = new IspravnoStanje(); // ovo potencijalno mogu maknuti
+    this.relacije = new HashMap<>();
+  }
+
+  public Map<String, RelacijaPrugeContext> getRelacije() {
+    return new HashMap<>(relacije);
+  }
+
+
+  public List<RelacijaPrugeContext> getRelacijePoStatusu(String status) {
+    List<RelacijaPrugeContext> rezultat = new ArrayList<>();
+    for (RelacijaPrugeContext relacija : relacije.values()) {
+      if (relacija.getTrenutnoStanje().getStatus().equals(status)) {
+        rezultat.add(relacija);
+      }
+    }
+    return rezultat;
+  }
+
+  public void request(String pocetnaStanica, String zavrsnaStanica, String novoStanje) {
+    List<Stanica> staniceNaRelaciji = getStaniceIzmedu(pocetnaStanica, zavrsnaStanica);
+    if (staniceNaRelaciji.isEmpty()) {
+      return;
+    }
+
+    int brojKolosijeka = staniceNaRelaciji.get(0).getBrojKolosjeka();
+    // ovo mozda refactor kasnije
+    String kljucRelacije = pocetnaStanica + "-" + zavrsnaStanica;
+    RelacijaPrugeContext relacija = relacije.get(kljucRelacije);
+
+    if (relacija == null) {
+      relacija = new RelacijaPrugeContext(this.oznaka, pocetnaStanica, zavrsnaStanica,
+          brojKolosijeka, "N");
+      relacije.put(kljucRelacije, relacija);
+    }
+
+    relacija.promijeniStanje(novoStanje);
   }
 
   public void dodajStanicu(Stanica stanica) {
