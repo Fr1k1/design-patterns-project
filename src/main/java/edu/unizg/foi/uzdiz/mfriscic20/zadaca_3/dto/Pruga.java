@@ -38,7 +38,7 @@ public class Pruga {
   }
 
   public void request(String pocetnaStanica, String zavrsnaStanica, String novoStanje) {
-    List<Stanica> staniceNaRelaciji = getStaniceIzmedu(pocetnaStanica, zavrsnaStanica);
+    List<Stanica> staniceNaRelaciji = fixedGetStaniceIzmedu(pocetnaStanica, zavrsnaStanica);
     if (staniceNaRelaciji.isEmpty()) {
       return;
     }

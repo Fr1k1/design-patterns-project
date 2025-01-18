@@ -1312,7 +1312,7 @@ public class SustavPrijevozPutnikaIRobe {
       return;
     }
 
-    List<Stanica> staniceNaRelaciji = pruga.getStaniceIzmedu(pocetnaStanica, zavrsnaStanica);
+    List<Stanica> staniceNaRelaciji = pruga.fixedGetStaniceIzmedu(pocetnaStanica, zavrsnaStanica);
     System.out.println("Stanice između su:");
     for (Stanica stanica : staniceNaRelaciji) {
       System.out.println(stanica.getStanica());
