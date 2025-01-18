@@ -23,43 +23,37 @@ public class Pruga {
   }
 
   private boolean postojiPreklapanje(String novaPolazna, String novaZavrsna) {
-    // Prvo nađimo sve stanice između za novu relaciju
     List<Stanica> staniceNoveRelacije = fixedGetStaniceIzmedu(novaPolazna, novaZavrsna);
-
-    // Uklonimo granice nove relacije za usporedbu
-    List<Stanica> unutarnjeStaniceNove = new ArrayList<>(staniceNoveRelacije);
-    unutarnjeStaniceNove.remove(0); // Ukloni prvu stanicu
-    if (unutarnjeStaniceNove.size() > 0) {
-      unutarnjeStaniceNove.remove(unutarnjeStaniceNove.size() - 1); // Ukloni zadnju stanicu
-    }
+    int brojKolosijeka = staniceNoveRelacije.get(0).getBrojKolosjeka();
 
     for (RelacijaPrugeContext postojecaRelacija : relacije.values()) {
-      // Preskočimo relacije koje su ispravne
       if (postojecaRelacija.getTrenutnoStanje().getStatus().equals("I")) {
         continue;
       }
+
       List<Stanica> stanicePostojeceRelacije = fixedGetStaniceIzmedu(
           postojecaRelacija.getPocetnaStanica(), postojecaRelacija.getZavrsnaStanica());
 
-      // Ako nova relacija sadrži BILO KOJU unutarnju stanicu postojeće relacije,
-      // ili ako postojeća relacija sadrži BILO KOJU unutarnju stanicu nove relacije,
-      // imamo preklapanje
-      for (Stanica stanica : unutarnjeStaniceNove) {
-        if (stanicePostojeceRelacije.contains(stanica)) {
-          return true;
+      // Za jedan kolosijek
+      if (brojKolosijeka == 1) {
+        for (Stanica stanica : staniceNoveRelacije) {
+          if (stanicePostojeceRelacije.contains(stanica)) {
+            return true;
+          }
         }
       }
+      // Za dva kolosijeka
+      else {
+        // Provjeri samo ako je isti smjer
+        boolean istiSmjer = novaPolazna.equals(postojecaRelacija.getPocetnaStanica())
+            || novaZavrsna.equals(postojecaRelacija.getZavrsnaStanica());
 
-      // Uklonimo granice postojeće relacije za usporedbu
-      List<Stanica> unutarnjeStanicePostojece = new ArrayList<>(stanicePostojeceRelacije);
-      unutarnjeStanicePostojece.remove(0);
-      if (unutarnjeStanicePostojece.size() > 0) {
-        unutarnjeStanicePostojece.remove(unutarnjeStanicePostojece.size() - 1);
-      }
-
-      for (Stanica stanica : unutarnjeStanicePostojece) {
-        if (staniceNoveRelacije.contains(stanica)) {
-          return true;
+        if (istiSmjer) {
+          for (Stanica stanica : staniceNoveRelacije) {
+            if (stanicePostojeceRelacije.contains(stanica)) {
+              return true;
+            }
+          }
         }
       }
     }
@@ -71,26 +65,51 @@ public class Pruga {
     String kljucRelacije = pocetnaStanica + "-" + zavrsnaStanica;
     RelacijaPrugeContext relacija = relacije.get(kljucRelacije);
 
-    // Ako relacija već postoji, provjeravamo samo pravila prijelaza između stanja
+    // Prvo dohvatimo stanice za ovu relaciju
+    List<Stanica> staniceNaRelaciji = fixedGetStaniceIzmedu(pocetnaStanica, zavrsnaStanica);
+    int brojKolosijeka = staniceNaRelaciji.get(0).getBrojKolosjeka();
+
+    // Ako relacija već postoji
     if (relacija != null) {
       String trenutnoStanje = relacija.getTrenutnoStanje().getStatus();
 
-      // Ako je relacija zatvorena, može prijeći samo u testiranje
+      // Pravila promjene stanja ostaju ista
       if (trenutnoStanje.equals("Z")) {
         return novoStanje.equals("T");
       }
-
-      // Iz testiranja može prijeći samo u ispravno stanje
       if (trenutnoStanje.equals("T")) {
         return novoStanje.equals("I");
       }
-
-      return true; // Za ostale prijelaze nema ograničenja
+      return true;
     }
 
-    // Ako je nova relacija, provjeri preklapanja samo ako je novo stanje K ili Z
-    if (novoStanje.equals("K") || novoStanje.equals("Z")) {
-      return !postojiPreklapanje(pocetnaStanica, zavrsnaStanica);
+    // Za nove relacije s jednim kolosijekom
+    if (brojKolosijeka == 1) {
+      if (novoStanje.equals("K") || novoStanje.equals("Z")) {
+        // Provjeri preklapanje u oba smjera
+        String obrnutiKljuc = zavrsnaStanica + "-" + pocetnaStanica;
+        return !postojiPreklapanje(pocetnaStanica, zavrsnaStanica)
+            && !relacije.containsKey(obrnutiKljuc);
+      }
+    }
+    // Za nove relacije s dva kolosijeka
+    else if (brojKolosijeka == 2) {
+      if (novoStanje.equals("K") || novoStanje.equals("Z")) {
+        // Provjeri preklapanje samo u zadanom smjeru
+        String obrnutiKljuc = zavrsnaStanica + "-" + pocetnaStanica;
+        RelacijaPrugeContext obrnutaRelacija = relacije.get(obrnutiKljuc);
+
+        // Dozvoli ako nema preklapanja ili ako postoji samo u suprotnom smjeru
+        if (!postojiPreklapanje(pocetnaStanica, zavrsnaStanica)) {
+          return true;
+        }
+        // Dozvoli preklapanje ako je u suprotnom smjeru
+        if (obrnutaRelacija != null
+            && !obrnutaRelacija.getTrenutnoStanje().getStatus().equals("I")) {
+          return false;
+        }
+        return true;
+      }
     }
 
     return true;

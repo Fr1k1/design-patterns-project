@@ -1128,7 +1128,7 @@ public class SustavPrijevozPutnikaIRobe {
       return;
     }
 
-    System.out.println("Vrsta vlaka je " + vlak.getVrstaVlaka()); // Prvo ispišite vrstu vlaka
+    System.out.println("Vrsta vlaka je " + vlak.getVrstaVlaka());
 
     double osnovnaCijena = switch (vlak.getVrstaVlaka()) {
       case "U" -> cjenovniKontekst.getCijenaUbrzaniKm();
@@ -1136,7 +1136,6 @@ public class SustavPrijevozPutnikaIRobe {
       default -> cjenovniKontekst.getCijenaNormalniKm();
     };
 
-    // Postavljanje odgovarajuće strategije prema načinu kupnje
     switch (nacinKupnje.toUpperCase()) {
       case "WM":
         cjenovniKontekst.postaviStrategiju(new WebMobilnaIzracun(cjenovniKontekst.getPopustVikend(),
@@ -1283,15 +1282,11 @@ public class SustavPrijevozPutnikaIRobe {
   }
 
   private void obradiPromjenuStatusaPruge(String[] dijelovi) {
-    // Spoji sve dijelove natrag u string
     String unosKomande = String.join(" ", dijelovi);
-
-    // Razdvoji po crticama
     String[] parametri = unosKomande.substring(unosKomande.indexOf(' ')).trim().split(" - ");
 
     if (parametri.length != 4) {
-      System.out.println(
-          "Neispravan format komande PSP2S! Očekujem: PSP2S oznakaPruge - polaznaStanica - odredisnaStanica - status");
+      System.out.println("Neispravan format komande PSP2S!");
       return;
     }
 
@@ -1300,22 +1295,42 @@ public class SustavPrijevozPutnikaIRobe {
     String zavrsnaStanica = parametri[2].trim();
     String novoStanje = parametri[3].trim();
 
+    // Prvo pokušamo naći put na istoj pruzi
+    Putovanje put = pronadiPutNaIstojPruzi(pocetnaStanica, zavrsnaStanica);
+    if (put.isEmpty()) {
+      put = pronadiPutPrekoVisePruga(pocetnaStanica, zavrsnaStanica);
+    }
 
+    if (put.isEmpty()) {
+      System.out
+          .println("Ne postoji put između stanica " + pocetnaStanica + " i " + zavrsnaStanica);
+      return;
+    }
+
+    // Provjeri je li put na traženoj pruzi
+    boolean putNaPruzi = false;
+    for (Pruga prugaNaPutu : put.getPruge()) {
+      if (prugaNaPutu.getOznaka().equals(oznakaPruge)) {
+        putNaPruzi = true;
+        break;
+      }
+    }
+
+    if (!putNaPruzi) {
+      System.out.println("Zadane stanice ne pripadaju pruzi " + oznakaPruge);
+      return;
+    }
+
+    // Dohvati prugu i izvrši promjenu
     Pruga pruga = dohvatiPrugu(oznakaPruge);
     if (pruga == null) {
       System.out.println("Pruga " + oznakaPruge + " ne postoji");
       return;
     }
 
-    List<Stanica> staniceNaRelaciji = pruga.fixedGetStaniceIzmedu(pocetnaStanica, zavrsnaStanica);
     System.out.println("Stanice između su:");
-    for (Stanica stanica : staniceNaRelaciji) {
+    for (Stanica stanica : put.getStanice()) {
       System.out.println(stanica.getStanica());
-    }
-
-    if (staniceNaRelaciji.isEmpty()) {
-      System.out.println("Ne postoji direktna relacija između zadanih stanica");
-      return;
     }
 
     pruga.request(pocetnaStanica, zavrsnaStanica, novoStanje);
