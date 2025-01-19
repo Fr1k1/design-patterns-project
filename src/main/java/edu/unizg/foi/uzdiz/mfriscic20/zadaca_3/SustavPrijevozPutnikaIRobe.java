@@ -1128,6 +1128,51 @@ public class SustavPrijevozPutnikaIRobe {
       return;
     }
 
+    List<Stanica> staniceNaPutu = put.getStanice();
+    for (Pruga pruga : put.getPruge()) {
+      Map<String, RelacijaPrugeContext> relacije = pruga.getRelacije();
+
+      // Provjeri sve relacije na toj pruzi koje su u kvaru
+      for (RelacijaPrugeContext relacija : relacije.values()) {
+        if (!relacija.mozePutovatiVlak()) {
+          // Ako postoji relacija u kvaru, provjeri preklapa li se s našim putom
+          List<Stanica> staniceRelacije = pruga.fixedGetStaniceIzmedu(relacija.getPocetnaStanica(),
+              relacija.getZavrsnaStanica());
+
+          // Provjeri broj kolosijeka
+          int brojKolosijeka = staniceRelacije.get(0).getBrojKolosjeka();
+
+          if (brojKolosijeka == 1) {
+            // Za jedan kolosijek, bilo kakvo preklapanje je problem
+            for (Stanica stanica : staniceNaPutu) {
+              if (staniceRelacije.contains(stanica)) {
+                System.out
+                    .println("Nije moguće kupiti kartu - dio puta prolazi kroz relaciju u kvaru: "
+                        + relacija.getPocetnaStanica() + " - " + relacija.getZavrsnaStanica());
+                return;
+              }
+            }
+          } else {
+            // Za dva kolosijeka, provjeri smjer
+            boolean istiSmjer = relacija.getPocetnaStanica().equals(polaznaStanica)
+                || relacija.getZavrsnaStanica().equals(odredisnaStanica);
+
+            if (istiSmjer) {
+              for (Stanica stanica : staniceNaPutu) {
+                if (staniceRelacije.contains(stanica)) {
+                  System.out
+                      .println("Nije moguće kupiti kartu - dio puta prolazi kroz relaciju u kvaru: "
+                          + relacija.getPocetnaStanica() + " - " + relacija.getZavrsnaStanica());
+                  return;
+                }
+              }
+            }
+            // Ako nije isti smjer, dozvoljavamo putovanje
+          }
+        }
+      }
+    }
+
     System.out.println("Vrsta vlaka je " + vlak.getVrstaVlaka());
 
     double osnovnaCijena = switch (vlak.getVrstaVlaka()) {

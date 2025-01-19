@@ -60,6 +60,16 @@ public class Pruga {
     return false;
   }
 
+  public boolean mozePutovatiIzmeduStanica(String stanica1, String stanica2) {
+    String kljucRelacije = stanica1 + "-" + stanica2;
+    RelacijaPrugeContext relacija = relacije.get(kljucRelacije);
+
+    if (relacija != null) {
+      return relacija.mozePutovatiVlak();
+    }
+    return true;
+  }
+
   private boolean mozeMijenjatiStatus(String pocetnaStanica, String zavrsnaStanica,
       String novoStanje) {
     String kljucRelacije = pocetnaStanica + "-" + zavrsnaStanica;
