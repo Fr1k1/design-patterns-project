@@ -149,7 +149,7 @@ public class Pruga {
 
     // Provjeri može li se mijenjati status
     if (!mozeMijenjatiStatus(pocetnaStanica, zavrsnaStanica, novoStanje)) {
-      System.out.println("Nije moguće promijeniti status relacije zbog postojećih ograničenja");
+      System.out.println("Nije moguće promijeniti status relacije zbog zadanih pravila");
       return;
     }
 

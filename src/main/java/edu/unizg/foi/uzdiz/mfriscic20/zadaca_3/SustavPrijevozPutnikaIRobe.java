@@ -16,6 +16,10 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.Scanner;
 import java.util.Set;
+import edu.unizg.foi.uzdiz.mfriscic20.zadaca_3.command.Command;
+import edu.unizg.foi.uzdiz.mfriscic20.zadaca_3.command.CommandInvoker;
+import edu.unizg.foi.uzdiz.mfriscic20.zadaca_3.command.StatistikaKartiConcreteCommand;
+import edu.unizg.foi.uzdiz.mfriscic20.zadaca_3.command.StatistikaReceiver;
 import edu.unizg.foi.uzdiz.mfriscic20.zadaca_3.composite.VlakComposite;
 import edu.unizg.foi.uzdiz.mfriscic20.zadaca_3.composite.VozniRedComponent;
 import edu.unizg.foi.uzdiz.mfriscic20.zadaca_3.composite.VozniRedComposite;
@@ -392,6 +396,8 @@ public class SustavPrijevozPutnikaIRobe {
       case "IRPS":
         obradiIspisRelacijaPruga(dijelovi);
         break;
+      case "STAT":
+        obradiStatKomandu(dijelovi);
       default:
         ispisiNepoznatuKomandu();
     }
@@ -1020,6 +1026,24 @@ public class SustavPrijevozPutnikaIRobe {
   // ============================================================================================
   // DZ3
   // ============================================================================================
+
+  private void obradiStatKomandu(String[] dijelovi) {
+    // tu jos treba provjeriti dal je datum
+    if (dijelovi.length != 2) {
+      System.out.println("Neispravan format STAT komande!");
+      return;
+    }
+
+    String datum = dijelovi[1];
+
+    StatistikaReceiver receiver = new StatistikaReceiver(kartaCaretaker);
+
+    Command command = new StatistikaKartiConcreteCommand(receiver, datum);
+
+    CommandInvoker invoker = new CommandInvoker();
+    invoker.setCommand(command);
+    invoker.executeCommand();
+  }
 
   private CijenovniContext cjenovniKontekst;
 
