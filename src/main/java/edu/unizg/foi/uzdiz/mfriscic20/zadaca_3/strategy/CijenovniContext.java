@@ -11,7 +11,7 @@ public class CijenovniContext {
 
   public void postaviStrategiju(IzracunCijeneKarte strategija) {
     this.strategija = strategija;
-    System.out.println("Strategija mi je" + strategija);
+    // System.out.println("Strategija mi je" + strategija);
   }
 
   public void postaviCijene(double cijenaNormalniKm, double cijenaUbrzaniKm, double cijenaBrzi,

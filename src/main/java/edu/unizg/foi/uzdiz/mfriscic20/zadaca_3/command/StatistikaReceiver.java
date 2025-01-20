@@ -27,7 +27,7 @@ public class StatistikaReceiver {
 
     System.out.println("STATISTIKA ZA " + datum);
     System.out.println("Ukupno karata: " + ukupnoKarata);
-    System.out.println("Ukupan prihod: " + String.format("%.2f €", ukupanPrihod));
+    System.out.println("Ukupan prihod: " + ukupanPrihod + "eura");
   }
 }
 

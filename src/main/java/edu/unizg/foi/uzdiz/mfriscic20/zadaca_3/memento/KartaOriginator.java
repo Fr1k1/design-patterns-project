@@ -26,7 +26,6 @@ public class KartaOriginator {
     this.konacnaCijena = konacnaCijena;
     this.udaljenostKm = udaljenostKm;
     this.jeVikend = jeVikend;
-    // kaj s ovim
     this.vrijemeKupnje = LocalDateTime.now();
   }
 

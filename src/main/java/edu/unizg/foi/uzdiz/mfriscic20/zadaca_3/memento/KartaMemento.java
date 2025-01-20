@@ -2,7 +2,6 @@ package edu.unizg.foi.uzdiz.mfriscic20.zadaca_3.memento;
 
 import java.time.LocalDateTime;
 
-// ova klasa se cini ok
 public class KartaMemento {
   private final String oznakaVlaka;
   private final String polaznaStanica;
