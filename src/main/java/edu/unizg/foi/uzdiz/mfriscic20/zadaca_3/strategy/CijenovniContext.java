@@ -33,17 +33,17 @@ public class CijenovniContext {
   }
 
   public double getCijenaNormalniKm() {
-    System.out.println("Pozivam se za normalne kilometre");
+    // System.out.println("Pozivam se za normalne kilometre");
     return cijenaNormalniKm;
   }
 
   public double getCijenaUbrzaniKm() {
-    System.out.println("Pozivam se za ubrzane kilometre");
+    // System.out.println("Pozivam se za ubrzane kilometre");
     return cijenaUbrzaniKm;
   }
 
   public double getCijenaBrziKm() {
-    System.out.println("Pozivam se za brze kilometre");
+    // System.out.println("Pozivam se za brze kilometre");
     return cijenaBrziKm;
   }
 

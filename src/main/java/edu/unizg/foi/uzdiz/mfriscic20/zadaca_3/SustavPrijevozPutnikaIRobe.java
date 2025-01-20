@@ -1034,7 +1034,6 @@ public class SustavPrijevozPutnikaIRobe {
   // ============================================================================================
 
   private void obradiStatkKomandu(String[] dijelovi) {
-    // tu jos treba provjeriti dal je datum
     if (dijelovi.length != 2) {
       System.out.println("Neispravan format STAT komande!");
       return;
@@ -1142,11 +1141,9 @@ public class SustavPrijevozPutnikaIRobe {
 
   private boolean vlakVoziIzmeduStanica(VlakComposite vlak, String polaznaStanica,
       String odredisnaStanica) {
-    // Provjeri kroz etape vlaka postoji li put između tih stanica
     return vlak.prolaziTrazenimPutem(polaznaStanica, odredisnaStanica);
   }
 
-  // 43 linije...jos za 15 smanji
   private void obradiKkpv2sKomandu(String[] dijelovi) {
     if (cjenovniKontekst == null) {
       System.out.println("Cijene nisu postavljene..prvo ih postavite s CVP.");
@@ -1196,25 +1193,8 @@ public class SustavPrijevozPutnikaIRobe {
       return;
     }
     boolean jeVikend = provjeriDaliJeVikend(datum);
-    double udaljenostKm = 0;
-    List<Stanica> stanice = put.getStanice();
-    boolean obrnutRedoslijed = false;
 
-    for (Pruga pruga : put.getPruge()) {
-      List<Stanica> staniceNaPruzi = pruga.getStanice();
-      if (staniceNaPruzi.indexOf(stanice.get(0)) > staniceNaPruzi
-          .indexOf(stanice.get(stanice.size() - 1))) {
-        obrnutRedoslijed = true;
-        break;
-      }
-    }
-    for (int i = 0; i < stanice.size() - 1; i++) {
-      if (!obrnutRedoslijed) {
-        udaljenostKm += stanice.get(i + 1).getDuzina();
-      } else {
-        udaljenostKm += stanice.get(i).getDuzina();
-      }
-    }
+    double udaljenostKm = izracunajUdaljenostKm(put);
 
     try {
       double konacnaCijena =
@@ -1230,11 +1210,35 @@ public class SustavPrijevozPutnikaIRobe {
     }
   }
 
+  private double izracunajUdaljenostKm(Putovanje put) {
+    List<Stanica> stanice = put.getStanice();
+    boolean obrnutRedoslijed = false;
+
+    for (Pruga pruga : put.getPruge()) {
+      List<Stanica> staniceNaPruzi = pruga.getStanice();
+      if (staniceNaPruzi.indexOf(stanice.get(0)) > staniceNaPruzi
+          .indexOf(stanice.get(stanice.size() - 1))) {
+        obrnutRedoslijed = true;
+        break;
+      }
+    }
+    double udaljenostKm = 0;
+    for (int i = 0; i < stanice.size() - 1; i++) {
+      if (!obrnutRedoslijed) {
+        udaljenostKm += stanice.get(i + 1).getDuzina();
+      } else {
+        udaljenostKm += stanice.get(i).getDuzina();
+      }
+    }
+
+    return udaljenostKm;
+  }
+
   private void ispisiKartu(String oznakaVlaka, String polaznaStanica, String odredisnaStanica,
       String datum, String nacinKupnje, double osnovnaCijena, double konacnaCijena,
       double udaljenostKm, boolean jeVikend) {
 
-    System.out.println("\n=== KARTA ZA VLAK ===");
+    System.out.println("========== KARTA ZA VLAK ==========");
     System.out.println("Oznaka vlaka: " + oznakaVlaka);
     System.out.println("Relacija: " + polaznaStanica + " - " + odredisnaStanica);
     System.out.println("Datum putovanja: " + datum);
@@ -1245,7 +1249,7 @@ public class SustavPrijevozPutnikaIRobe {
     System.out.println("Konačna cijena: " + String.format("%.2f", konacnaCijena) + " €");
     System.out.println("Datum i vrijeme kupnje: "
         + LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy. HH:mm")));
-    System.out.println("==================");
+    System.out.println("====================================");
   }
 
   private boolean provjeriKupovinuKarte(String polaznaStanica, String odredisnaStanica,
@@ -1265,7 +1269,7 @@ public class SustavPrijevozPutnikaIRobe {
             for (Stanica stanica : staniceNaPutu) {
               if (staniceRelacije.contains(stanica)) {
                 System.out
-                    .println("Nije moguće kupiti kartu - dio puta prolazi kroz relaciju u kvaru: "
+                    .println("Nije moguće kupiti kartu jer dio puta prolazi kroz relaciju u kvaru: "
                         + relacija.getPocetnaStanica() + " - " + relacija.getZavrsnaStanica());
                 return false;
               }
@@ -1276,8 +1280,8 @@ public class SustavPrijevozPutnikaIRobe {
             if (istiSmjer) {
               for (Stanica stanica : staniceNaPutu) {
                 if (staniceRelacije.contains(stanica)) {
-                  System.out
-                      .println("Nije moguće kupiti kartu - dio puta prolazi kroz relaciju u kvaru: "
+                  System.out.println(
+                      "Nije moguće kupiti kartu jer dio puta prolazi kroz relaciju u kvaru: "
                           + relacija.getPocetnaStanica() + " - " + relacija.getZavrsnaStanica());
                   return false;
                 }
@@ -1305,7 +1309,7 @@ public class SustavPrijevozPutnikaIRobe {
         cjenovniKontekst.postaviStrategiju(new BlagajnaIzracun(cjenovniKontekst.getPopustVikend()));
         return true;
       default:
-        System.out.println("Nevažeći način kupnje! Koristite: B, WM ili V");
+        System.out.println("Nevažeći način kupovine. Koristite B, WM ili V");
         return false;
     }
   }
@@ -1336,8 +1340,11 @@ public class SustavPrijevozPutnikaIRobe {
         return;
       }
 
+      System.out.println("Ispis kupljenih karata");
+      System.out.println("=======================================");
+
       for (int i = 0; i < sveKarte.size(); i++) {
-        System.out.println("\nKarta #" + (i + 1));
+        System.out.println("Karta " + (i + 1));
         ispisiKartu(sveKarte.get(i));
       }
     } else {
@@ -1358,7 +1365,7 @@ public class SustavPrijevozPutnikaIRobe {
   }
 
   private void ispisiKartu(KartaMemento karta) {
-    System.out.println("=== KARTA ZA VLAK ===");
+    System.out.println("========== KARTA ZA VLAK ==========");
     System.out.println("Oznaka vlaka: " + karta.getOznakaVlaka());
     System.out
         .println("Relacija: " + karta.getPolaznaStanica() + " - " + karta.getOdredisnaStanica());
@@ -1370,7 +1377,7 @@ public class SustavPrijevozPutnikaIRobe {
     System.out.println("Konačna cijena: " + String.format("%.2f", karta.getKonacnaCijena()) + " €");
     System.out.println("Datum i vrijeme kupnje: "
         + karta.getVrijemeKupnje().format(DateTimeFormatter.ofPattern("dd.MM.yyyy. HH:mm")));
-    System.out.println("==================");
+    System.out.println("===========================");
   }
 
   private void obradiPromjenuStatusaPruge(String[] dijelovi) {
@@ -1387,7 +1394,6 @@ public class SustavPrijevozPutnikaIRobe {
     String zavrsnaStanica = parametri[2].trim();
     String novoStanje = parametri[3].trim();
 
-    // Prvo pokušamo naći put na istoj pruzi
     Putovanje put = pronadiPutNaIstojPruzi(pocetnaStanica, zavrsnaStanica);
     if (put.isEmpty()) {
       put = pronadiPutPrekoVisePruga(pocetnaStanica, zavrsnaStanica);
@@ -1399,7 +1405,6 @@ public class SustavPrijevozPutnikaIRobe {
       return;
     }
 
-    // Provjeri je li put na traženoj pruzi
     boolean putNaPruzi = false;
     for (Pruga prugaNaPutu : put.getPruge()) {
       if (prugaNaPutu.getOznaka().equals(oznakaPruge)) {
@@ -1413,16 +1418,10 @@ public class SustavPrijevozPutnikaIRobe {
       return;
     }
 
-    // Dohvati prugu i izvrši promjenu
     Pruga pruga = dohvatiPrugu(oznakaPruge);
     if (pruga == null) {
       System.out.println("Pruga " + oznakaPruge + " ne postoji");
       return;
-    }
-
-    System.out.println("Stanice između su:");
-    for (Stanica stanica : put.getStanice()) {
-      System.out.println(stanica.getStanica());
     }
 
     pruga.request(pocetnaStanica, zavrsnaStanica, novoStanje);
@@ -1448,15 +1447,15 @@ public class SustavPrijevozPutnikaIRobe {
         System.out.println("Pruga " + oznakaPruge + " ne postoji");
         return;
       }
-      ispisRelacijaZaPrugu(pruga, status);
+      ispisiRelacijeZaPrugu(pruga, status);
     } else {
       for (Pruga pruga : pruge) {
-        ispisRelacijaZaPrugu(pruga, status);
+        ispisiRelacijeZaPrugu(pruga, status);
       }
     }
   }
 
-  private void ispisRelacijaZaPrugu(Pruga pruga, String status) {
+  private void ispisiRelacijeZaPrugu(Pruga pruga, String status) {
     Map<String, RelacijaPrugeContext> relacije = pruga.getRelacije();
     List<RelacijaPrugeContext> relacijeStatusom = new ArrayList<>();
 
@@ -1467,8 +1466,7 @@ public class SustavPrijevozPutnikaIRobe {
     }
 
     if (!relacijeStatusom.isEmpty()) {
-      System.out
-          .println("\nRelacije na pruzi " + pruga.getOznaka() + " sa statusom " + status + ":");
+      System.out.println("Relacije na pruzi " + pruga.getOznaka() + " koje imaju status " + status);
       for (RelacijaPrugeContext relacija : relacijeStatusom) {
         System.out.println(relacija.getPocetnaStanica() + " - " + relacija.getZavrsnaStanica());
       }
