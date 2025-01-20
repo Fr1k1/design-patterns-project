@@ -18,7 +18,7 @@ public class Pruga {
   public Pruga(String oznaka) {
     this.oznaka = oznaka;
     this.stanice = new ArrayList<>();
-    this.trenutnoStanje = new IspravnoStanje(); // ovo potencijalno mogu maknuti
+    this.trenutnoStanje = new IspravnoStanje();
     this.relacije = new HashMap<>();
   }
 
@@ -34,17 +34,13 @@ public class Pruga {
       List<Stanica> stanicePostojeceRelacije = fixedGetStaniceIzmedu(
           postojecaRelacija.getPocetnaStanica(), postojecaRelacija.getZavrsnaStanica());
 
-      // Za jedan kolosijek
       if (brojKolosijeka == 1) {
         for (Stanica stanica : staniceNoveRelacije) {
           if (stanicePostojeceRelacije.contains(stanica)) {
             return true;
           }
         }
-      }
-      // Za dva kolosijeka
-      else {
-        // Provjeri samo ako je isti smjer
+      } else {
         boolean istiSmjer = novaPolazna.equals(postojecaRelacija.getPocetnaStanica())
             || novaZavrsna.equals(postojecaRelacija.getZavrsnaStanica());
 
@@ -61,8 +57,8 @@ public class Pruga {
   }
 
   public boolean mozePutovatiIzmeduStanica(String stanica1, String stanica2) {
-    String kljucRelacije = stanica1 + "-" + stanica2;
-    RelacijaPrugeContext relacija = relacije.get(kljucRelacije);
+    String kljuc = stanica1 + "-" + stanica2;
+    RelacijaPrugeContext relacija = relacije.get(kljuc);
 
     if (relacija != null) {
       return relacija.mozePutovatiVlak();
@@ -70,50 +66,43 @@ public class Pruga {
     return true;
   }
 
+
   private boolean mozeMijenjatiStatus(String pocetnaStanica, String zavrsnaStanica,
       String novoStanje) {
     String kljucRelacije = pocetnaStanica + "-" + zavrsnaStanica;
     RelacijaPrugeContext relacija = relacije.get(kljucRelacije);
-
-    // Prvo dohvatimo stanice za ovu relaciju
     List<Stanica> staniceNaRelaciji = fixedGetStaniceIzmedu(pocetnaStanica, zavrsnaStanica);
     int brojKolosijeka = staniceNaRelaciji.get(0).getBrojKolosjeka();
 
-    // Ako relacija već postoji
     if (relacija != null) {
       String trenutnoStanje = relacija.getTrenutnoStanje().getStatus();
 
-      // Pravila promjene stanja ostaju ista
+      // iz z moze samo u t
       if (trenutnoStanje.equals("Z")) {
         return novoStanje.equals("T");
       }
+
+      // iz t moze samo u i ili k
       if (trenutnoStanje.equals("T")) {
-        return novoStanje.equals("I");
+        return novoStanje.equals("I") || novoStanje.equals("K");
       }
       return true;
     }
 
-    // Za nove relacije s jednim kolosijekom
     if (brojKolosijeka == 1) {
       if (novoStanje.equals("K") || novoStanje.equals("Z")) {
-        // Provjeri preklapanje u oba smjera
         String obrnutiKljuc = zavrsnaStanica + "-" + pocetnaStanica;
         return !postojiPreklapanje(pocetnaStanica, zavrsnaStanica)
             && !relacije.containsKey(obrnutiKljuc);
       }
-    }
-    // Za nove relacije s dva kolosijeka
-    else if (brojKolosijeka == 2) {
+    } else if (brojKolosijeka == 2) {
       if (novoStanje.equals("K") || novoStanje.equals("Z")) {
-        // Provjeri preklapanje samo u zadanom smjeru
         String obrnutiKljuc = zavrsnaStanica + "-" + pocetnaStanica;
         RelacijaPrugeContext obrnutaRelacija = relacije.get(obrnutiKljuc);
 
-        // Dozvoli ako nema preklapanja ili ako postoji samo u suprotnom smjeru
         if (!postojiPreklapanje(pocetnaStanica, zavrsnaStanica)) {
           return true;
         }
-        // Dozvoli preklapanje ako je u suprotnom smjeru
         if (obrnutaRelacija != null
             && !obrnutaRelacija.getTrenutnoStanje().getStatus().equals("I")) {
           return false;
@@ -131,13 +120,13 @@ public class Pruga {
 
 
   public List<RelacijaPrugeContext> getRelacijePoStatusu(String status) {
-    List<RelacijaPrugeContext> rezultat = new ArrayList<>();
+    List<RelacijaPrugeContext> lista = new ArrayList<>();
     for (RelacijaPrugeContext relacija : relacije.values()) {
       if (relacija.getTrenutnoStanje().getStatus().equals(status)) {
-        rezultat.add(relacija);
+        lista.add(relacija);
       }
     }
-    return rezultat;
+    return lista;
   }
 
   public void request(String pocetnaStanica, String zavrsnaStanica, String novoStanje) {
@@ -147,7 +136,6 @@ public class Pruga {
       return;
     }
 
-    // Provjeri može li se mijenjati status
     if (!mozeMijenjatiStatus(pocetnaStanica, zavrsnaStanica, novoStanje)) {
       System.out.println("Nije moguće promijeniti status relacije zbog zadanih pravila");
       return;
@@ -159,7 +147,7 @@ public class Pruga {
 
     if (relacija == null) {
       relacija = new RelacijaPrugeContext(this.oznaka, pocetnaStanica, zavrsnaStanica,
-          brojKolosijeka, "N");
+          brojKolosijeka, "I");
       relacije.put(kljucRelacije, relacija);
     }
 

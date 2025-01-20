@@ -3,7 +3,6 @@ package edu.unizg.foi.uzdiz.mfriscic20.zadaca_3;
 import java.io.IOException;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
@@ -305,7 +304,7 @@ public class SustavPrijevozPutnikaIRobe {
 
     do {
       System.out.println(
-          "\nUnesite komandu (IP, ISP, ISI2S, IK, IV, IEV, IEVD, IVRV, IVI2S, DK, PK, DPK, SVV, UPV, PPV, Q za izlaz):");
+          "\nUnesite komandu (IP, ISP, ISI2S, IK, IV, IEV, IEVD, IVRV, IVI2S, DK, PK, DPK, SVV, UPV, PPV, CVP, KKPV2S, IKKPV, PSP2S, IRPS, STATK, STATP, Q za izlaz):");
       try {
         unos = skenerUnosa.nextLine().trim();
         if (!unos.isEmpty()) {
@@ -1201,10 +1200,9 @@ public class SustavPrijevozPutnikaIRobe {
           cjenovniKontekst.izracunajCijenu(osnovnaCijena, udaljenostKm, jeVikend);
       kartaOriginator.setStanje(oznakaVlaka, polaznaStanica, odredisnaStanica, datum, nacinKupnje,
           osnovnaCijena, konacnaCijena, udaljenostKm, jeVikend);
-      kartaCaretaker.spremiKartu(kartaOriginator.createMemento());
-
-      ispisiKartu(oznakaVlaka, polaznaStanica, odredisnaStanica, datum, nacinKupnje, osnovnaCijena,
-          konacnaCijena, udaljenostKm, jeVikend);
+      KartaMemento novaKarta = kartaOriginator.createMemento();
+      kartaCaretaker.spremiKartu(novaKarta);
+      ispisiKartu(novaKarta);
     } catch (Exception e) {
       System.out.println("Greška pri izračunu cijene: " + e.getMessage());
     }
@@ -1234,23 +1232,7 @@ public class SustavPrijevozPutnikaIRobe {
     return udaljenostKm;
   }
 
-  private void ispisiKartu(String oznakaVlaka, String polaznaStanica, String odredisnaStanica,
-      String datum, String nacinKupnje, double osnovnaCijena, double konacnaCijena,
-      double udaljenostKm, boolean jeVikend) {
 
-    System.out.println("========== KARTA ZA VLAK ==========");
-    System.out.println("Oznaka vlaka: " + oznakaVlaka);
-    System.out.println("Relacija: " + polaznaStanica + " - " + odredisnaStanica);
-    System.out.println("Datum putovanja: " + datum);
-    System.out.println("Udaljenost: " + udaljenostKm + " km");
-    System.out.println("Način kupnje: " + nacinKupnje);
-    System.out
-        .println("Osnovna cijena: " + String.format("%.2f", osnovnaCijena * udaljenostKm) + " €");
-    System.out.println("Konačna cijena: " + String.format("%.2f", konacnaCijena) + " €");
-    System.out.println("Datum i vrijeme kupnje: "
-        + LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy. HH:mm")));
-    System.out.println("====================================");
-  }
 
   private boolean provjeriKupovinuKarte(String polaznaStanica, String odredisnaStanica,
       Putovanje put) {
@@ -1377,7 +1359,7 @@ public class SustavPrijevozPutnikaIRobe {
     System.out.println("Konačna cijena: " + String.format("%.2f", karta.getKonacnaCijena()) + " €");
     System.out.println("Datum i vrijeme kupnje: "
         + karta.getVrijemeKupnje().format(DateTimeFormatter.ofPattern("dd.MM.yyyy. HH:mm")));
-    System.out.println("===========================");
+    System.out.println("===================================");
   }
 
   private void obradiPromjenuStatusaPruge(String[] dijelovi) {
@@ -1467,6 +1449,8 @@ public class SustavPrijevozPutnikaIRobe {
 
     if (!relacijeStatusom.isEmpty()) {
       System.out.println("Relacije na pruzi " + pruga.getOznaka() + " koje imaju status " + status);
+      System.out
+          .println("========================================================================");
       for (RelacijaPrugeContext relacija : relacijeStatusom) {
         System.out.println(relacija.getPocetnaStanica() + " - " + relacija.getZavrsnaStanica());
       }
