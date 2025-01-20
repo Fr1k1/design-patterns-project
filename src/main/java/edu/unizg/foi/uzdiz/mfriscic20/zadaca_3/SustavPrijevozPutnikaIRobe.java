@@ -19,7 +19,8 @@ import java.util.Scanner;
 import java.util.Set;
 import edu.unizg.foi.uzdiz.mfriscic20.zadaca_3.command.Command;
 import edu.unizg.foi.uzdiz.mfriscic20.zadaca_3.command.CommandInvoker;
-import edu.unizg.foi.uzdiz.mfriscic20.zadaca_3.command.StatistikaKartiConcreteCommand;
+import edu.unizg.foi.uzdiz.mfriscic20.zadaca_3.command.StatistikaKupovineConcreteCommand;
+import edu.unizg.foi.uzdiz.mfriscic20.zadaca_3.command.StatistikaPutovanjaConcreteCommand;
 import edu.unizg.foi.uzdiz.mfriscic20.zadaca_3.command.StatistikaReceiver;
 import edu.unizg.foi.uzdiz.mfriscic20.zadaca_3.composite.VlakComposite;
 import edu.unizg.foi.uzdiz.mfriscic20.zadaca_3.composite.VozniRedComponent;
@@ -399,6 +400,9 @@ public class SustavPrijevozPutnikaIRobe {
         break;
       case "STATK":
         obradiStatkKomandu(dijelovi);
+        break;
+      case "STATP":
+        obradiStatpKomandu(dijelovi);
         break;
       default:
         ispisiNepoznatuKomandu();
@@ -1048,8 +1052,30 @@ public class SustavPrijevozPutnikaIRobe {
 
     StatistikaReceiver receiver = new StatistikaReceiver(kartaCaretaker);
 
-    Command command = new StatistikaKartiConcreteCommand(receiver, datum);
+    Command command = new StatistikaKupovineConcreteCommand(receiver, datum);
 
+    CommandInvoker invoker = new CommandInvoker();
+    invoker.setCommand(command);
+    invoker.executeCommand();
+  }
+
+  private void obradiStatpKomandu(String[] dijelovi) {
+    if (dijelovi.length != 2) {
+      System.out.println("Neispravan format STAT komande!");
+      return;
+    }
+
+    String datum = dijelovi[1];
+    try {
+      DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy.");
+      LocalDate.parse(datum, formatter);
+    } catch (DateTimeParseException e) {
+      System.out.println("Neispravan format datuma! Koristite format: dd.MM.yyyy.");
+      return;
+    }
+
+    StatistikaReceiver receiver = new StatistikaReceiver(kartaCaretaker);
+    Command command = new StatistikaPutovanjaConcreteCommand(receiver, datum);
     CommandInvoker invoker = new CommandInvoker();
     invoker.setCommand(command);
     invoker.executeCommand();
