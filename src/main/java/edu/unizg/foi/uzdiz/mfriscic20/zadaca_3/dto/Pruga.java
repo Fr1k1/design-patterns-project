@@ -31,19 +31,24 @@ public class Pruga {
         continue;
       }
 
+      boolean suSusjedne = novaPolazna.equals(postojecaRelacija.getZavrsnaStanica())
+          || novaZavrsna.equals(postojecaRelacija.getPocetnaStanica());
+      if (suSusjedne) {
+        continue;
+      }
+
       List<Stanica> stanicePostojeceRelacije = fixedGetStaniceIzmedu(
           postojecaRelacija.getPocetnaStanica(), postojecaRelacija.getZavrsnaStanica());
 
       if (brojKolosijeka == 1) {
-        for (Stanica stanica : staniceNoveRelacije) {
-          if (stanicePostojeceRelacije.contains(stanica)) {
+        for (int i = 1; i < staniceNoveRelacije.size() - 1; i++) {
+          if (stanicePostojeceRelacije.contains(staniceNoveRelacije.get(i))) {
             return true;
           }
         }
       } else {
         boolean istiSmjer = novaPolazna.equals(postojecaRelacija.getPocetnaStanica())
             || novaZavrsna.equals(postojecaRelacija.getZavrsnaStanica());
-
         if (istiSmjer) {
           for (Stanica stanica : staniceNoveRelacije) {
             if (stanicePostojeceRelacije.contains(stanica)) {
@@ -73,6 +78,10 @@ public class Pruga {
     RelacijaPrugeContext relacija = relacije.get(kljucRelacije);
     List<Stanica> staniceNaRelaciji = fixedGetStaniceIzmedu(pocetnaStanica, zavrsnaStanica);
     int brojKolosijeka = staniceNaRelaciji.get(0).getBrojKolosjeka();
+
+    if (relacija != null && relacija.getTrenutnoStanje().getStatus().equals(novoStanje)) {
+      return false;
+    }
 
     if (relacija != null) {
       String trenutnoStanje = relacija.getTrenutnoStanje().getStatus();
@@ -137,7 +146,8 @@ public class Pruga {
     }
 
     if (!mozeMijenjatiStatus(pocetnaStanica, zavrsnaStanica, novoStanje)) {
-      System.out.println("Nije moguće promijeniti status relacije zbog zadanih pravila");
+      System.out.println(
+          "Nije moguće promijeniti status relacije zbog zadanih pravila (broj kolosjeka, presjek itd.)");
       return;
     }
 
