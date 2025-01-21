@@ -15,7 +15,7 @@ public class RelacijaPrugeContext {
     this.zavrsnaStanica = zavrsnaStanica;
     this.brojKolosijeka = brojKolosijeka;
     this.smjer = smjer;
-    this.trenutnoStanje = new IspravnoStanje(); // ovo se mora promijeniti da se cita iz datoteke
+    this.trenutnoStanje = new IspravnoStanje();
   }
 
   public void promijeniStanje(String novoStanje) {

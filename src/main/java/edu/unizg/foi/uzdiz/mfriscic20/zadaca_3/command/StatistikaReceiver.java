@@ -42,7 +42,7 @@ public class StatistikaReceiver {
       }
     }
 
-    System.out.println("STATISTIKA KUPNJE ZA " + datum);
+    System.out.println("STATISTIKA KUPNJE (datum kupnje na karti) ZA " + datum);
     System.out.println("Ukupno karata: " + ukupnoKarata);
     System.out.printf("Ukupan prihod: %.2f eura%n", ukupanPrihod);
   }

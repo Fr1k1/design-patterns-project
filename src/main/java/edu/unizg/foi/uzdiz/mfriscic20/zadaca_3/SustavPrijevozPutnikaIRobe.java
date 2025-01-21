@@ -999,8 +999,6 @@ public class SustavPrijevozPutnikaIRobe {
             .println("Ne postoji put između stanica " + polaznaStanica + " i " + odredisnaStanica);
         return;
       }
-
-      // znaci do tud samo pronalazi put, bez ikakvog doticaja s dz2
       List<VlakComposite> odgovarajuciVlakovi = new ArrayList<>();
       for (VozniRedComponent komponenta : vozniRed.svaDjeca) {
         if (komponenta instanceof VlakComposite) {
